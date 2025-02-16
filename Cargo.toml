@@ -1,0 +1,10 @@
+[package]
+name = "atk-hub-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+atk-command = { git = "https://github.com/cyberphantom52/atk-command.git" }
+hidapi = { version = "2.6.3", default-features = false, features = [
+    "linux-shared-hidraw",
+] }
