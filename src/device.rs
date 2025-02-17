@@ -1,5 +1,6 @@
 use atk_command::Command;
 use hidapi::HidDevice;
+static MAX_REPORT_LENGTH: usize = 64;
 
 pub struct Device(HidDevice);
 
@@ -48,10 +49,10 @@ impl Device {
     }
 
     pub fn read(&self) -> Result<Vec<u8>, hidapi::HidError> {
-        let mut buf = vec![0; 17];
-        self.0.read(&mut buf)?;
+        let mut buf = [0u8; MAX_REPORT_LENGTH];
+        let bytes_read = self.0.read(&mut buf)?;
 
         // Remove Report ID from the response
-        Ok(buf[1..].to_vec())
+        Ok(buf[1..bytes_read].to_vec())
     }
 }
