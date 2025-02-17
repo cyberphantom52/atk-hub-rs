@@ -42,9 +42,13 @@ impl Device {
         Ok(Device(device.open_device(&context)?))
     }
 
-    pub fn send<C: Into<Box<dyn Command>>>(&self, command: C) -> Result<usize, hidapi::HidError> {
+    pub fn send<C: Into<Box<dyn Command>>>(
+        &self,
+        report_id: u8,
+        command: C,
+    ) -> Result<usize, hidapi::HidError> {
         // Prepend Report ID to the command
-        let data = [&[0x08], command.into().as_bytes()].concat();
+        let data = [&[report_id], command.into().as_bytes()].concat();
         self.0.write(&data)
     }
 
