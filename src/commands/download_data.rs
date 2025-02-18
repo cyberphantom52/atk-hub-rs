@@ -214,3 +214,37 @@ impl WirelessMouseOnline {
         Ok(Self { raw: raw.to_vec() })
     }
 }
+
+impl std::fmt::Display for MouseCidMid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
+    }
+}
+
+#[derive(Command)]
+#[base_offset(0x5)]
+#[report_id(0x8)]
+#[cmd_len(0x10)]
+pub struct MouseCidMid {
+    raw: Vec<u8>,
+}
+
+impl MouseCidMid {
+    fn query() -> Self {
+        let mut command = Self {
+            raw: vec![0u8; Self::cmd_len()],
+        };
+
+        command.set_id(CommandId::GetMouseCIDMID);
+
+        command
+    }
+
+    fn cid(&self) -> u8 {
+        self.raw[Self::base_offset()]
+    }
+
+    fn mid(&self) -> u8 {
+        self.raw[Self::base_offset() + 0x1]
+    }
+}
