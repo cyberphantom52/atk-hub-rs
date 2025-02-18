@@ -144,8 +144,8 @@ impl DpiLedCommand {
     }
 
     pub fn set_rgb_lighting_effects(&mut self, value: RGBLightingEffects) {
-        self.raw[DpiLedCommand::base_offset()] = value as u8;
-        self.raw[DpiLedCommand::base_offset() + 0x1] = 0x55u8.wrapping_sub(value as u8);
+        self.set_byte_pair(value as u8, Self::base_offset())
+            .unwrap();
     }
 
     pub fn long_bright_brightness(&self) -> LongBrightBrightness {
@@ -153,8 +153,8 @@ impl DpiLedCommand {
     }
 
     pub fn set_long_bright_brightness(&mut self, value: LongBrightBrightness) {
-        self.raw[DpiLedCommand::base_offset() + 0x2] = value as u8;
-        self.raw[DpiLedCommand::base_offset() + 0x3] = 0x55u8.wrapping_sub(value as u8);
+        self.set_byte_pair(value as u8, Self::base_offset() + 0x2)
+            .unwrap();
     }
 
     pub fn breathing_speed(&self) -> BreathingSpeed {
@@ -162,8 +162,8 @@ impl DpiLedCommand {
     }
 
     pub fn set_breathing_speed(&mut self, value: BreathingSpeed) {
-        self.raw[DpiLedCommand::base_offset() + 0x4] = value as u8;
-        self.raw[DpiLedCommand::base_offset() + 0x5] = 0x55u8.wrapping_sub(value as u8);
+        self.set_byte_pair(value as u8, Self::base_offset() + 0x4)
+            .unwrap();
     }
 
     pub fn dpi_rgb_enabled(&self) -> DpiRGBEnabled {
@@ -171,7 +171,7 @@ impl DpiLedCommand {
     }
 
     pub fn set_dpi_rgb_enabled(&mut self, value: DpiRGBEnabled) {
-        self.raw[DpiLedCommand::base_offset() + 0x6] = value as u8;
-        self.raw[DpiLedCommand::base_offset() + 0x7] = 0x55u8.wrapping_sub(value as u8);
+        self.set_byte_pair(value as u8, Self::base_offset() + 0x6)
+            .unwrap();
     }
 }
