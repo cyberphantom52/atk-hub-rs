@@ -2,6 +2,7 @@ mod battery;
 mod download_data;
 mod dpi_led;
 mod far_distance;
+mod pairing;
 mod performance;
 mod poll_rate;
 mod silent_height;
