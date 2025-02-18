@@ -38,6 +38,17 @@ pub struct PairingStatus {
     raw: Vec<u8>,
 }
 
+impl std::fmt::Display for PairingStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Pairing Status: {} | Time Left: {}",
+            self.pair_status(),
+            self.pair_time_left()
+        )
+    }
+}
+
 impl PairingStatus {
     pub fn query() -> Self {
         let mut command = Self {
