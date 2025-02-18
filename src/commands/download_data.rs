@@ -215,18 +215,18 @@ impl WirelessMouseOnline {
     }
 }
 
-impl std::fmt::Display for MouseCidMid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
-    }
-}
-
 #[derive(Command)]
 #[base_offset(0x5)]
 #[report_id(0x8)]
 #[cmd_len(0x10)]
 pub struct MouseCidMid {
     raw: Vec<u8>,
+}
+
+impl std::fmt::Display for MouseCidMid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
+    }
 }
 
 impl MouseCidMid {
@@ -246,6 +246,49 @@ impl MouseCidMid {
 
     pub fn mid(&self) -> u8 {
         self.raw[Self::base_offset() + 0x1]
+    }
+
+    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
+        if raw.len() != Self::cmd_len() {
+            return Err(format!(
+                "Invalid command length: expected {}, got {}",
+                Self::cmd_len(),
+                raw.len()
+            ));
+        }
+
+        Ok(Self { raw: raw.to_vec() })
+    }
+}
+
+#[derive(Command)]
+#[base_offset(0x5)]
+#[report_id(0x8)]
+#[cmd_len(0x10)]
+pub struct MouseVersion {
+    raw: Vec<u8>,
+}
+
+impl std::fmt::Display for MouseVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Mouse Version: V{}", self.version())
+    }
+}
+impl MouseVersion {
+    pub fn query() -> Self {
+        let mut command = Self {
+            raw: vec![0u8; Self::cmd_len()],
+        };
+
+        command.set_id(CommandId::GetMouseVersion);
+
+        command
+    }
+
+    pub fn version(&self) -> String {
+        let major = self.raw[Self::base_offset()];
+        let minor = self.raw[Self::base_offset() + 0x1];
+        format!("{:02x}{:02x}", major, minor)
     }
 
     pub fn try_from(raw: &[u8]) -> Result<Self, String> {
