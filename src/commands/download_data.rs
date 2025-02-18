@@ -230,7 +230,7 @@ pub struct MouseCidMid {
 }
 
 impl MouseCidMid {
-    fn query() -> Self {
+    pub fn query() -> Self {
         let mut command = Self {
             raw: vec![0u8; Self::cmd_len()],
         };
@@ -240,11 +240,23 @@ impl MouseCidMid {
         command
     }
 
-    fn cid(&self) -> u8 {
+    pub fn cid(&self) -> u8 {
         self.raw[Self::base_offset()]
     }
 
-    fn mid(&self) -> u8 {
+    pub fn mid(&self) -> u8 {
         self.raw[Self::base_offset() + 0x1]
+    }
+
+    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
+        if raw.len() != Self::cmd_len() {
+            return Err(format!(
+                "Invalid command length: expected {}, got {}",
+                Self::cmd_len(),
+                raw.len()
+            ));
+        }
+
+        Ok(Self { raw: raw.to_vec() })
     }
 }
