@@ -13,7 +13,7 @@ dependencies = [
 [[package]]
 name = "atk-command-derive"
 version = "0.1.0"
-source = "git+https://github.com/cyberphantom52/atk-command-derive.git#cc3dcec696699dd64ea9ad587e1f2686665a508e"
+source = "git+https://github.com/cyberphantom52/atk-command-derive.git#e1a4ddad3d4083e2b9076899d1680ee399e9e777"
 dependencies = [
  "proc-macro2",
  "quote",
