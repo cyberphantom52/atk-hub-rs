@@ -1,5 +1,6 @@
 mod battery;
 mod download_data;
+mod dpi;
 mod dpi_led;
 mod factory_reset;
 mod far_distance;
@@ -10,6 +11,7 @@ mod silent_height;
 
 pub use battery::BatteryStatus;
 pub use download_data::*;
+pub use dpi::*;
 pub use dpi_led::*;
 pub use factory_reset::*;
 pub use far_distance::*;
