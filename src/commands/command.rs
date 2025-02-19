@@ -29,6 +29,25 @@ impl<T: CommandDescriptor> Default for Command<T> {
     }
 }
 
+impl<T: CommandDescriptor> TryFrom<&[u8]> for Command<T> {
+    type Error = String;
+
+    fn try_from(raw: &[u8]) -> Result<Self, Self::Error> {
+        if raw.len() != T::cmd_len() {
+            return Err(format!(
+                "Invalid buffer length: expected {}, got {}",
+                T::cmd_len(),
+                raw.len()
+            ));
+        }
+
+        Ok(Self {
+            raw: raw.to_vec(),
+            _cmd: std::marker::PhantomData,
+        })
+    }
+}
+
 impl<T: CommandDescriptor> Command<T> {
     pub fn raw_mut(&mut self) -> &mut [u8] {
         self.raw.as_mut_slice()
