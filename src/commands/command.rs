@@ -20,6 +20,15 @@ pub struct Command<T: CommandDescriptor> {
     _cmd: std::marker::PhantomData<T>,
 }
 
+impl<T: CommandDescriptor> Default for Command<T> {
+    fn default() -> Self {
+        Self {
+            raw: vec![0u8; T::cmd_len()],
+            _cmd: std::marker::PhantomData,
+        }
+    }
+}
+
 impl<T: CommandDescriptor> Command<T> {
     pub fn set_byte_pair(&mut self, value: u8, offset: usize) -> Result<(), &'static str> {
         if offset < T::base_offset() {
