@@ -3,17 +3,9 @@
 version = 4
 
 [[package]]
-name = "atk-command"
-version = "0.1.0"
-source = "git+https://github.com/cyberphantom52/atk-command.git#aba2c1de15e99db5a60ab82b7b3ed890b31099f2"
-dependencies = [
- "atk-command-derive",
-]
-
-[[package]]
 name = "atk-command-derive"
 version = "0.1.0"
-source = "git+https://github.com/cyberphantom52/atk-command-derive.git#e1a4ddad3d4083e2b9076899d1680ee399e9e777"
+source = "git+https://github.com/cyberphantom52/atk-command-derive.git#531e6bf91e697eb5114b63ae78164fa79f4c71b9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -24,7 +16,7 @@ dependencies = [
 name = "atk-hub-rs"
 version = "0.1.0"
 dependencies = [
- "atk-command",
+ "atk-command-derive",
  "hidapi",
 ]
 
@@ -105,9 +97,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a210d160f08b701c8721ba1c726c11662f877ea6b7094007e1ca9a1041945034"
+checksum = "00e2473a93778eb0bad35909dff6a10d28e63f792f16ed15e404fca9d5eeedbe"
 
 [[package]]
 name = "windows-sys"

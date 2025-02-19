@@ -1,5 +1,6 @@
-use atk_command::Command;
+use crate::commands::{Command, CommandDescriptor};
 use hidapi::HidDevice;
+
 static MAX_REPORT_LENGTH: usize = 64;
 
 pub struct Device(HidDevice);
@@ -42,13 +43,12 @@ impl Device {
         Ok(Device(device.open_device(&context)?))
     }
 
-    pub fn send<C: Into<Box<dyn Command>>>(
+    pub fn send<T: CommandDescriptor>(
         &self,
-        report_id: u8,
-        command: C,
+        command: Command<T>,
     ) -> Result<usize, hidapi::HidError> {
         // Prepend Report ID to the command
-        let data = [&[report_id], command.into().as_bytes()].concat();
+        let data = [&[T::report_id()], command.as_bytes()].concat();
         self.0.write(&data)
     }
 
