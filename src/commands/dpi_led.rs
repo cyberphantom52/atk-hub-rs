@@ -1,4 +1,5 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId, EEPROMAddress};
+use atk_command_derive::CommandDescriptor;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
@@ -72,15 +73,11 @@ impl From<u8> for LongBrightBrightness {
     }
 }
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[report_id(0x8)]
-#[cmd_len(0x10)]
-pub struct DpiLedCommand {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct DpiLedCommand;
 
-impl std::fmt::Display for DpiLedCommand {
+impl std::fmt::Display for Command<DpiLedCommand> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -93,16 +90,15 @@ impl std::fmt::Display for DpiLedCommand {
     }
 }
 
-impl DpiLedCommand {
+impl Command<DpiLedCommand> {
     pub fn new(
         enable: DpiRGBEnabled,
         effect: RGBLightingEffects,
         brightness: LongBrightBrightness,
         speed: BreathingSpeed,
     ) -> Self {
-        let mut command = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+        let mut command = Command::default();
+
         command.set_id(CommandId::SetEEPROM);
         command.set_eeprom_address(EEPROMAddress::DpiRgbLightingEffects);
         command.set_valid_data_len(0x8);
@@ -116,10 +112,7 @@ impl DpiLedCommand {
     }
 
     pub fn query() -> Self {
-        let mut command = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
-
+        let mut command = Command::default();
         command.set_id(CommandId::GetEEPROM);
         command.set_eeprom_address(EEPROMAddress::DpiRgbLightingEffects);
         command.set_valid_data_len(0x8);
@@ -127,51 +120,39 @@ impl DpiLedCommand {
         command
     }
 
-    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
-        if raw.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid command length: expected {}, got {}",
-                Self::cmd_len(),
-                raw.len()
-            ));
-        }
-
-        Ok(Self { raw: raw.to_vec() })
-    }
-
     pub fn rgb_lighting_effects(&self) -> RGBLightingEffects {
-        self.raw[DpiLedCommand::base_offset()].into()
+        self.as_bytes()[DpiLedCommand::base_offset()].into()
     }
 
     pub fn set_rgb_lighting_effects(&mut self, value: RGBLightingEffects) {
-        self.set_byte_pair(value as u8, Self::base_offset())
+        self.set_byte_pair(value as u8, DpiLedCommand::base_offset())
             .unwrap();
     }
 
     pub fn long_bright_brightness(&self) -> LongBrightBrightness {
-        self.raw[DpiLedCommand::base_offset() + 0x2].into()
+        self.as_bytes()[DpiLedCommand::base_offset() + 0x2].into()
     }
 
     pub fn set_long_bright_brightness(&mut self, value: LongBrightBrightness) {
-        self.set_byte_pair(value as u8, Self::base_offset() + 0x2)
+        self.set_byte_pair(value as u8, DpiLedCommand::base_offset() + 0x2)
             .unwrap();
     }
 
     pub fn breathing_speed(&self) -> BreathingSpeed {
-        self.raw[DpiLedCommand::base_offset() + 0x4].into()
+        self.as_bytes()[DpiLedCommand::base_offset() + 0x4].into()
     }
 
     pub fn set_breathing_speed(&mut self, value: BreathingSpeed) {
-        self.set_byte_pair(value as u8, Self::base_offset() + 0x4)
+        self.set_byte_pair(value as u8, DpiLedCommand::base_offset() + 0x4)
             .unwrap();
     }
 
     pub fn dpi_rgb_enabled(&self) -> DpiRGBEnabled {
-        self.raw[DpiLedCommand::base_offset() + 0x6].into()
+        self.as_bytes()[DpiLedCommand::base_offset() + 0x6].into()
     }
 
     pub fn set_dpi_rgb_enabled(&mut self, value: DpiRGBEnabled) {
-        self.set_byte_pair(value as u8, Self::base_offset() + 0x6)
+        self.set_byte_pair(value as u8, DpiLedCommand::base_offset() + 0x6)
             .unwrap();
     }
 }

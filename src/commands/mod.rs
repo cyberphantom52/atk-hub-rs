@@ -1,27 +1,27 @@
 mod command;
 pub use command::{Command, CommandDescriptor};
 
-// mod battery;
-// mod download_data;
-// mod dpi;
-// mod dpi_led;
-// mod factory_reset;
-// mod far_distance;
-// mod pairing;
-// mod performance;
-// mod poll_rate;
-// mod silent_height;
+mod battery;
+mod download_data;
+mod dpi;
+mod dpi_led;
+mod factory_reset;
+mod far_distance;
+mod pairing;
+mod performance;
+mod poll_rate;
+mod silent_height;
 
-// pub use battery::BatteryStatus;
-// pub use download_data::*;
-// pub use dpi::*;
-// pub use dpi_led::*;
-// pub use factory_reset::*;
-// pub use far_distance::*;
-// pub use performance::*;
-// pub use poll_rate::*;
-// pub use silent_height::*;
-
+pub use battery::*;
+pub use download_data::*;
+pub use dpi::*;
+pub use dpi_led::*;
+pub use factory_reset::*;
+pub use far_distance::*;
+pub use performance::*;
+pub use poll_rate::*;
+pub use silent_height::*;
+//
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]

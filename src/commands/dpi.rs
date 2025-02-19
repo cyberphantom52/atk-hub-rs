@@ -1,4 +1,5 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId, EEPROMAddress};
+use atk_command_derive::CommandDescriptor;
 
 static DPI_STEP: u16 = 50;
 
@@ -111,19 +112,13 @@ impl Pair {
     }
 }
 
-#[derive(Command)]
-#[report_id(0x08)]
-#[cmd_len(0x10)]
-#[base_offset(0x5)]
-pub struct DpiConfig {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct DpiProfile;
 
-impl DpiConfig {
+impl Command<DpiProfile> {
     pub fn query(pair: Pair) -> Self {
-        let mut instance = Self {
-            raw: vec![0; Self::cmd_len()],
-        };
+        let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(pair.dpi());
         instance.set_valid_data_len(0x8);
@@ -132,35 +127,21 @@ impl DpiConfig {
     }
 
     pub fn dpis(&self) -> Result<(Dpi, Dpi), &'static str> {
-        let dpis =
-            &self.raw[Self::base_offset()..(Self::base_offset() + self.valid_data_len() as usize)];
+        let dpis = &self.as_bytes()[DpiProfile::base_offset()
+            ..(DpiProfile::base_offset() + self.valid_data_len() as usize)];
         let dpi1 = Dpi::try_from(&dpis[0..4])?;
         let dpi2 = Dpi::try_from(&dpis[4..8])?;
         Ok((dpi1, dpi2))
     }
-
-    pub fn try_from(data: &[u8]) -> Result<Self, &'static str> {
-        if data.len() != Self::cmd_len() {
-            return Err("Invalid data length");
-        }
-
-        Ok(Self { raw: data.to_vec() })
-    }
 }
 
-#[derive(Command)]
-#[report_id(0x08)]
-#[cmd_len(0x10)]
-#[base_offset(0x5)]
-pub struct DpiColorConfig {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct DpiColorProfile;
 
-impl DpiColorConfig {
+impl Command<DpiColorProfile> {
     pub fn query(pair: Pair) -> Self {
-        let mut instance = Self {
-            raw: vec![0; Self::cmd_len()],
-        };
+        let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(pair.color());
         instance.set_valid_data_len(0x8);
@@ -169,19 +150,11 @@ impl DpiColorConfig {
     }
 
     pub fn colors(&self) -> Result<(Color, Color), &'static str> {
-        let colors =
-            &self.raw[Self::base_offset()..(Self::base_offset() + self.valid_data_len() as usize)];
+        let colors = &self.as_bytes()[DpiColorProfile::base_offset()
+            ..(DpiColorProfile::base_offset() + self.valid_data_len() as usize)];
         Ok((
             Color::try_from(&colors[0..4])?,
             Color::try_from(&colors[4..8])?,
         ))
-    }
-
-    pub fn try_from(data: &[u8]) -> Result<Self, &'static str> {
-        if data.len() != Self::cmd_len() {
-            return Err("Invalid data length");
-        }
-
-        Ok(Self { raw: data.to_vec() })
     }
 }

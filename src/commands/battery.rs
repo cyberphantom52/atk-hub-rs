@@ -1,14 +1,11 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId};
+use atk_command_derive::CommandDescriptor;
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[report_id(0x8)]
-#[cmd_len(0x10)]
-pub struct BatteryStatus {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct GetBatteryStatus;
 
-impl std::fmt::Display for BatteryStatus {
+impl std::fmt::Display for Command<GetBatteryStatus> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -20,11 +17,9 @@ impl std::fmt::Display for BatteryStatus {
     }
 }
 
-impl BatteryStatus {
-    pub fn query() -> Self {
-        let mut command = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+impl Command<GetBatteryStatus> {
+    pub fn query() -> Command<GetBatteryStatus> {
+        let mut command = Command::default();
 
         command.set_id(CommandId::GetBatteryLevel);
 
@@ -32,26 +27,14 @@ impl BatteryStatus {
     }
 
     pub fn level(&self) -> u8 {
-        self.raw[Self::base_offset()]
+        self.as_bytes()[GetBatteryStatus::base_offset()]
     }
 
     pub fn charge(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x1]
+        self.as_bytes()[GetBatteryStatus::base_offset() + 0x1]
     }
 
     pub fn voltage(&self) -> f32 {
-        self.raw[Self::base_offset() + 0x2] as f32 / 10f32
-    }
-
-    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
-        if raw.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid command length: expected {}, got {}",
-                Self::cmd_len(),
-                raw.len()
-            ));
-        }
-
-        Ok(Self { raw: raw.to_vec() })
+        self.as_bytes()[GetBatteryStatus::base_offset() + 0x2] as f32 / 10f32
     }
 }

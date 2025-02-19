@@ -1,4 +1,5 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId, EEPROMAddress};
+use atk_command_derive::CommandDescriptor;
 
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
@@ -19,25 +20,19 @@ impl From<u8> for SilentHeightMode {
     }
 }
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[report_id(0x8)]
-#[cmd_len(0x10)]
-pub struct SilentHeight {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct SilentHeight;
 
-impl std::fmt::Display for SilentHeight {
+impl std::fmt::Display for Command<SilentHeight> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Mouse Silent Height: {:?}", self.silent_height())
     }
 }
 
-impl SilentHeight {
+impl Command<SilentHeight> {
     pub fn query() -> Self {
-        let mut command = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+        let mut command = Command::default();
 
         command.set_id(CommandId::GetEEPROM);
         command.set_eeprom_address(EEPROMAddress::SilentHeight);
@@ -47,22 +42,11 @@ impl SilentHeight {
     }
 
     pub fn silent_height(&self) -> SilentHeightMode {
-        self.raw[Self::base_offset()].into()
+        self.as_bytes()[SilentHeight::base_offset()].into()
     }
 
     pub fn set_silent_height(&mut self, mode: SilentHeightMode) {
-        self.set_byte_pair(mode as u8, Self::base_offset()).unwrap();
-    }
-
-    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
-        if raw.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid command length: expected {}, got {}",
-                Self::cmd_len(),
-                raw.len()
-            ));
-        }
-
-        Ok(Self { raw: raw.to_vec() })
+        self.set_byte_pair(mode as u8, SilentHeight::base_offset())
+            .unwrap();
     }
 }

@@ -30,6 +30,10 @@ impl<T: CommandDescriptor> Default for Command<T> {
 }
 
 impl<T: CommandDescriptor> Command<T> {
+    pub fn raw_mut(&mut self) -> &mut [u8] {
+        self.raw.as_mut_slice()
+    }
+
     pub fn set_byte_pair(&mut self, value: u8, offset: usize) -> Result<(), &'static str> {
         if offset < T::base_offset() {
             return Err("Provided offset is less than the base offset");

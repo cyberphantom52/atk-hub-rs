@@ -1,14 +1,11 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId, EEPROMAddress};
+use atk_command_derive::CommandDescriptor;
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[cmd_len(0x10)]
-#[report_id(0x8)]
-pub struct MousePerfSettings {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct MousePerfSettings;
 
-impl std::fmt::Display for MousePerfSettings {
+impl std::fmt::Display for Command<MousePerfSettings> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -22,11 +19,9 @@ impl std::fmt::Display for MousePerfSettings {
     }
 }
 
-impl MousePerfSettings {
+impl Command<MousePerfSettings> {
     pub fn query() -> Self {
-        let mut instance = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+        let mut instance = Command::default();
 
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(EEPROMAddress::StabilizationTime);
@@ -36,74 +31,59 @@ impl MousePerfSettings {
     }
 
     pub fn stabilization_time(&self) -> u8 {
-        self.raw[Self::base_offset()]
+        self.as_bytes()[MousePerfSettings::base_offset()]
     }
 
     pub fn set_stabilization_time(&mut self, value: u8) {
-        self.set_byte_pair(value, Self::base_offset()).unwrap();
+        self.set_byte_pair(value, MousePerfSettings::base_offset())
+            .unwrap();
     }
 
     pub fn motion_sync(&self) -> bool {
-        self.raw[Self::base_offset() + 0x2] == 0x1
+        self.as_bytes()[MousePerfSettings::base_offset() + 0x2] == 0x1
     }
 
     pub fn set_motion_sync(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset() + 0x2)
+        self.set_byte_pair(value, MousePerfSettings::base_offset() + 0x2)
             .unwrap();
     }
 
     pub fn close_led_time(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x4]
+        self.as_bytes()[MousePerfSettings::base_offset() + 0x4]
     }
 
     pub fn set_close_led_time(&mut self, value: u8) {
-        self.set_byte_pair(value, Self::base_offset() + 0x4)
+        self.set_byte_pair(value, MousePerfSettings::base_offset() + 0x4)
             .unwrap();
     }
 
     pub fn linear_correction(&self) -> bool {
-        self.raw[Self::base_offset() + 0x6] == 0x1
+        self.as_bytes()[MousePerfSettings::base_offset() + 0x6] == 0x1
     }
 
     pub fn set_linear_correction(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset() + 0x6)
+        self.set_byte_pair(value, MousePerfSettings::base_offset() + 0x6)
             .unwrap();
     }
 
     pub fn ripple_control(&self) -> bool {
-        self.raw[Self::base_offset() + 0x8] == 0x1
+        self.as_bytes()[MousePerfSettings::base_offset() + 0x8] == 0x1
     }
 
     pub fn set_ripple_control(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset() + 0x8)
+        self.set_byte_pair(value, MousePerfSettings::base_offset() + 0x8)
             .unwrap();
     }
-
-    pub fn try_from(data: &[u8]) -> Result<Self, String> {
-        if data.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid data length. Expected {}, got {}",
-                Self::cmd_len(),
-                data.len()
-            ));
-        }
-
-        Ok(Self { raw: data.to_vec() })
-    }
 }
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[cmd_len(0x10)]
-#[report_id(0x8)]
-pub struct SensorPerfSettings {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct SensorPerfSettings;
 
-impl std::fmt::Display for SensorPerfSettings {
+impl std::fmt::Display for Command<SensorPerfSettings> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Move Close LED: {} | Sensor Sleep: {} | Sensor Sleep Time: {}s | Performance Mode: {} | RF TX Time: {}ms",
             self.move_close_led(),
@@ -114,11 +94,9 @@ impl std::fmt::Display for SensorPerfSettings {
     }
 }
 
-impl SensorPerfSettings {
+impl Command<SensorPerfSettings> {
     pub fn query() -> Self {
-        let mut instance = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+        let mut instance = Command::default();
 
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(EEPROMAddress::MoveCloseLights);
@@ -128,61 +106,50 @@ impl SensorPerfSettings {
     }
 
     pub fn move_close_led(&self) -> bool {
-        self.raw[Self::base_offset()] == 0x1
+        self.as_bytes()[SensorPerfSettings::base_offset()] == 0x1
     }
 
     pub fn set_move_close_led(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset()).unwrap();
+        self.set_byte_pair(value, SensorPerfSettings::base_offset())
+            .unwrap();
     }
 
     pub fn sensor_sleep(&self) -> bool {
-        self.raw[Self::base_offset() + 0x2] == 0x1
+        self.as_bytes()[SensorPerfSettings::base_offset() + 0x2] == 0x1
     }
 
     pub fn set_sensor_sleep(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset() + 0x2)
+        self.set_byte_pair(value, SensorPerfSettings::base_offset() + 0x2)
             .unwrap();
     }
 
     pub fn sensor_sleep_time(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x4]
+        self.as_bytes()[SensorPerfSettings::base_offset() + 0x4]
     }
 
     pub fn set_sensor_sleep_time(&mut self, value: u8) {
-        self.set_byte_pair(value, Self::base_offset() + 0x4)
+        self.set_byte_pair(value, SensorPerfSettings::base_offset() + 0x4)
             .unwrap();
     }
 
     pub fn performance_mode(&self) -> bool {
-        self.raw[Self::base_offset() + 0x6] == 0x1
+        self.as_bytes()[SensorPerfSettings::base_offset() + 0x6] == 0x1
     }
 
     pub fn set_performance_mode(&mut self, value: bool) {
         let value = if value { 0x1 } else { 0x0 };
-        self.set_byte_pair(value, Self::base_offset() + 0x6)
+        self.set_byte_pair(value, SensorPerfSettings::base_offset() + 0x6)
             .unwrap();
     }
 
     pub fn rf_tx_time(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x8]
+        self.as_bytes()[SensorPerfSettings::base_offset() + 0x8]
     }
 
     pub fn set_rf_tx_time(&mut self, value: u8) {
-        self.set_byte_pair(value, Self::base_offset() + 0x8)
+        self.set_byte_pair(value, SensorPerfSettings::base_offset() + 0x8)
             .unwrap();
-    }
-
-    pub fn try_from(data: &[u8]) -> Result<Self, String> {
-        if data.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid data length. Expected {}, got {}",
-                Self::cmd_len(),
-                data.len()
-            ));
-        }
-
-        Ok(Self { raw: data.to_vec() })
     }
 }

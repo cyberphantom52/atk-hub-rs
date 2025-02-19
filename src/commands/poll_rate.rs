@@ -1,4 +1,5 @@
-use atk_command::{Command, CommandId, EEPROMAddress};
+use super::{Command, CommandDescriptor, CommandId, EEPROMAddress};
+use atk_command_derive::CommandDescriptor;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -41,15 +42,11 @@ impl From<u8> for PollingRate {
     }
 }
 
-#[derive(Command)]
-#[base_offset(0x5)]
-#[report_id(0x8)]
-#[cmd_len(0x10)]
-pub struct MouseInfo {
-    raw: Vec<u8>,
-}
+#[derive(CommandDescriptor)]
+#[command_descriptor(base_offset = 0x5, report_id = 0x8, cmd_len = 0x10)]
+pub struct MouseInfo;
 
-impl std::fmt::Display for MouseInfo {
+impl std::fmt::Display for Command<MouseInfo> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -61,11 +58,9 @@ impl std::fmt::Display for MouseInfo {
     }
 }
 
-impl MouseInfo {
+impl Command<MouseInfo> {
     pub fn query() -> Self {
-        let mut command = Self {
-            raw: vec![0u8; Self::cmd_len()],
-        };
+        let mut command = Command::default();
 
         command.set_id(CommandId::GetEEPROM);
         command.set_eeprom_address(EEPROMAddress::ReportRate);
@@ -75,38 +70,29 @@ impl MouseInfo {
     }
 
     pub fn poll_rate(&self) -> PollingRate {
-        self.raw[Self::base_offset()].into()
+        self.as_bytes()[MouseInfo::base_offset()].into()
     }
 
     pub fn set_poll_rate(&mut self, rate: PollingRate) {
-        self.set_byte_pair(rate as u8, Self::base_offset()).unwrap();
+        self.set_byte_pair(rate as u8, MouseInfo::base_offset())
+            .unwrap();
     }
 
     pub fn num_profile(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x2]
+        self.as_bytes()[MouseInfo::base_offset() + 0x2]
     }
 
     pub fn set_num_profile(&mut self, dpi: u8) {
-        self.set_byte_pair(dpi, Self::base_offset() + 0x2).unwrap();
+        self.set_byte_pair(dpi, MouseInfo::base_offset() + 0x2)
+            .unwrap();
     }
 
     pub fn active_profile(&self) -> u8 {
-        self.raw[Self::base_offset() + 0x4]
+        self.as_bytes()[MouseInfo::base_offset() + 0x4]
     }
 
     pub fn set_active_profile(&mut self, dpi: u8) {
-        self.set_byte_pair(dpi, Self::base_offset() + 0x4).unwrap();
-    }
-
-    pub fn try_from(raw: &[u8]) -> Result<Self, String> {
-        if raw.len() != Self::cmd_len() {
-            return Err(format!(
-                "Invalid command length: expected {}, got {}",
-                Self::cmd_len(),
-                raw.len()
-            ));
-        }
-
-        Ok(Self { raw: raw.to_vec() })
+        self.set_byte_pair(dpi, MouseInfo::base_offset() + 0x4)
+            .unwrap();
     }
 }
