@@ -4,6 +4,7 @@ mod dpi_led;
 mod mouse_info;
 mod pairing;
 mod performance;
+mod silent_height;
 
 pub mod prelude {
     pub use super::battery::*;
@@ -12,4 +13,5 @@ pub mod prelude {
     pub use super::mouse_info::*;
     pub use super::pairing::*;
     pub use super::performance::*;
+    pub use super::silent_height::*;
 }
