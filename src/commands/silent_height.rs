@@ -21,17 +21,15 @@ impl From<u8> for SilentHeightMode {
 }
 
 #[derive(Command, Default)]
-pub struct SilentHeight {
-    mode: SilentHeightMode,
-}
+pub struct SilentHeight(SilentHeightMode);
 
 impl SilentHeight {
     pub fn silent_height(&self) -> SilentHeightMode {
-        self.mode
+        self.0
     }
 
     pub fn builder(&self) -> CommandBuilder<Self> {
-        Command::builder().silent_height(self.mode)
+        Command::builder().silent_height(self.0)
     }
 }
 
@@ -55,6 +53,10 @@ impl Command<SilentHeight> {
         command.set_data_len(0x2).unwrap();
 
         CommandBuilder::new(command)
+    }
+
+    pub fn config(self) -> SilentHeight {
+        SilentHeight(self.data()[0x0].into())
     }
 
     pub fn set_silent_height(&mut self, mode: SilentHeightMode) {
