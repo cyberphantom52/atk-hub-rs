@@ -42,7 +42,7 @@ impl From<u8> for PollingRate {
     }
 }
 
-#[derive(Command, Default)]
+#[derive(Command, Default, Debug)]
 pub struct MouseInfo {
     poll_rate: PollingRate,
     num_profile: u8,

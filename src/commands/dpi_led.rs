@@ -55,7 +55,7 @@ impl From<u8> for LedBrightnessLevel {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Debug)]
 pub struct DpiLedSettings {
     mode: LedEffectMode,
     brightness: LedBrightnessLevel,

@@ -26,7 +26,7 @@ impl From<u8> for ConnectionType {
     }
 }
 
-#[derive(Command, Default)]
+#[derive(Command, Default, Debug)]
 pub struct DownloadData {
     encrypted_data: [u8; 4],
     cid: u8,
@@ -143,7 +143,7 @@ impl Command<GetWirelessMouseOnline> {
     }
 }
 
-#[derive(Command, Default)]
+#[derive(Command, Default, Debug)]
 pub struct GetMouseCidMid(u8, u8);
 
 impl GetMouseCidMid {
@@ -171,7 +171,7 @@ impl Command<GetMouseCidMid> {
     }
 }
 
-#[derive(Command, Default)]
+#[derive(Command, Default, Debug)]
 pub struct GetMouseVersion(u8, u8);
 
 impl GetMouseVersion {

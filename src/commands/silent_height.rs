@@ -20,7 +20,7 @@ impl From<u8> for SilentHeightMode {
     }
 }
 
-#[derive(Command, Default)]
+#[derive(Command, Default, Debug)]
 pub struct SilentHeight(SilentHeightMode);
 
 impl SilentHeight {
