@@ -26,7 +26,30 @@ impl From<u8> for ConnectionType {
 }
 
 #[derive(Command)]
-pub struct DownloadData;
+pub struct DownloadData {
+    encrypted_data: [u8; 4],
+    cid: u8,
+    mid: u8,
+    device_type: ConnectionType,
+}
+
+impl DownloadData {
+    pub fn encrypted_data(&self) -> &[u8; 4] {
+        &self.encrypted_data
+    }
+
+    pub fn cid(&self) -> u8 {
+        self.cid
+    }
+
+    pub fn mid(&self) -> u8 {
+        self.mid
+    }
+
+    pub fn device_type(&self) -> ConnectionType {
+        self.device_type
+    }
+}
 
 #[command_extension]
 impl Command<DownloadData> {
@@ -39,28 +62,22 @@ impl Command<DownloadData> {
         command
     }
 
-    pub fn encrypted_data(&self) -> &[u8] {
-        &self.data()[..0x4]
-    }
-
-    pub fn cid(&self) -> u8 {
-        self.data()[0x4]
-    }
-
-    pub fn mid(&self) -> u8 {
-        self.data()[0x5]
-    }
-
-    pub fn device_type(&self) -> ConnectionType {
-        self.data()[0x6].into()
+    pub fn config(self) -> DownloadData {
+        let encrypted_data: [u8; 4] = self.data()[..0x4].try_into().unwrap();
+        DownloadData {
+            encrypted_data,
+            cid: self.data()[0x4],
+            mid: self.data()[0x5],
+            device_type: self.data()[0x6].into(),
+        }
     }
 }
 
 #[derive(Command)]
-pub struct DownLoadDriverStatus;
+pub struct DriverStatus(u8);
 
 #[command_extension]
-impl Command<DownLoadDriverStatus> {
+impl Command<DriverStatus> {
     pub fn query() -> Self {
         let mut command = Command::default();
 
@@ -69,8 +86,8 @@ impl Command<DownLoadDriverStatus> {
         command
     }
 
-    pub fn driver_status(&self) -> u8 {
-        self.data()[0x0]
+    pub fn config(self) -> DriverStatus {
+        DriverStatus(self.data()[0x0])
     }
 }
 
@@ -108,21 +125,35 @@ impl Command<GetWirelessMouseOnline> {
         self.data()[0x0].into()
     }
 
-    pub fn rf_id_3(&self) -> u8 {
+    fn rf_id_3(&self) -> u8 {
         self.data()[0x1]
     }
 
-    pub fn rf_id_2(&self) -> u8 {
+    fn rf_id_2(&self) -> u8 {
         self.data()[0x2]
     }
 
-    pub fn rf_id_1(&self) -> u8 {
+    fn rf_id_1(&self) -> u8 {
         self.data()[0x3]
+    }
+
+    fn rf_id(&self) -> [u8; 3] {
+        [self.rf_id_1(), self.rf_id_2(), self.rf_id_3()]
     }
 }
 
 #[derive(Command)]
-pub struct GetMouseCidMid;
+pub struct GetMouseCidMid(u8, u8);
+
+impl GetMouseCidMid {
+    pub fn cid(&self) -> u8 {
+        self.0
+    }
+
+    pub fn mid(&self) -> u8 {
+        self.1
+    }
+}
 
 #[command_extension]
 impl Command<GetMouseCidMid> {
@@ -134,17 +165,29 @@ impl Command<GetMouseCidMid> {
         command
     }
 
-    pub fn cid(&self) -> u8 {
-        self.data()[0x0]
-    }
-
-    pub fn mid(&self) -> u8 {
-        self.data()[0x1]
+    pub fn config(self) -> GetMouseCidMid {
+        GetMouseCidMid(self.data()[0x0], self.data()[0x1])
     }
 }
 
 #[derive(Command)]
-pub struct GetMouseVersion;
+pub struct GetMouseVersion(u8, u8);
+
+impl GetMouseVersion {
+    pub fn major(&self) -> u8 {
+        self.0
+    }
+
+    pub fn minor(&self) -> u8 {
+        self.1
+    }
+}
+
+impl std::fmt::Display for GetMouseVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:02x}{:02x}", self.0, self.1)
+    }
+}
 
 #[command_extension]
 impl Command<GetMouseVersion> {
@@ -156,9 +199,10 @@ impl Command<GetMouseVersion> {
         command
     }
 
-    pub fn version(&self) -> String {
+    pub fn config(self) -> GetMouseVersion {
         let major = self.data()[0x0];
         let minor = self.data()[0x1];
-        format!("{:02x}{:02x}", major, minor)
+
+        GetMouseVersion(major, minor)
     }
 }

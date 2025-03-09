@@ -56,12 +56,43 @@ impl From<u8> for LedBrightnessLevel {
 }
 
 #[derive(Command)]
-pub struct DpiLedSettings;
+pub struct DpiLedSettings {
+    mode: LedEffectMode,
+    brightness: LedBrightnessLevel,
+    breathing_rate: LedBreathingRate,
+    enabled: bool,
+}
+
+impl DpiLedSettings {
+    pub fn mode(&self) -> LedEffectMode {
+        self.mode
+    }
+
+    pub fn brightness(&self) -> LedBrightnessLevel {
+        self.brightness
+    }
+
+    pub fn breathing_rate(&self) -> LedBreathingRate {
+        self.breathing_rate
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn builder(&self) -> CommandBuilder<DpiLedSettings> {
+        Command::builder()
+            .breathing_rate(self.breathing_rate())
+            .brightness_level(self.brightness())
+            .effect_mode(self.mode())
+            .enabled(self.enabled())
+    }
+}
 
 #[command_extension]
 impl Command<DpiLedSettings> {
-    pub fn builder(self) -> CommandBuilder<DpiLedSettings> {
-        let mut command = self;
+    pub fn builder() -> CommandBuilder<DpiLedSettings> {
+        let mut command = Command::default();
         command.set_id(CommandId::SetEEPROM);
         command.set_eeprom_address(EEPROMAddress::DpiRgbLightingEffects);
         command.set_data_len(0x8).unwrap();
@@ -78,32 +109,25 @@ impl Command<DpiLedSettings> {
         command
     }
 
-    pub fn effect_mode(&self) -> LedEffectMode {
-        self.data()[0x0].into()
+    pub fn config(self) -> DpiLedSettings {
+        DpiLedSettings {
+            mode: self.data()[0x0].into(),
+            brightness: self.data()[0x2].into(),
+            breathing_rate: self.data()[0x4].into(),
+            enabled: self.data()[0x6] == 0x1,
+        }
     }
 
     pub fn set_effect_mode(&mut self, value: LedEffectMode) {
         self.set_data_byte_with_checksum(value as u8, 0x0).unwrap();
     }
 
-    pub fn brightness_level(&self) -> LedBrightnessLevel {
-        self.data()[0x2].into()
-    }
-
     pub fn set_brightness_level(&mut self, value: LedBrightnessLevel) {
         self.set_data_byte_with_checksum(value as u8, 0x2).unwrap();
     }
 
-    pub fn breathing_rate(&self) -> LedBreathingRate {
-        self.data()[0x4].into()
-    }
-
     pub fn set_breathing_rate(&mut self, value: LedBreathingRate) {
         self.set_data_byte_with_checksum(value as u8, 0x4).unwrap();
-    }
-
-    pub fn enabled(&self) -> bool {
-        self.data()[0x6] == 0x1
     }
 
     pub fn set_enabled(&mut self, value: bool) {

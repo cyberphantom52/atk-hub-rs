@@ -42,7 +42,32 @@ impl From<u8> for PollingRate {
 }
 
 #[derive(Command)]
-pub struct MouseInfo;
+pub struct MouseInfo {
+    poll_rate: PollingRate,
+    num_profile: u8,
+    active_profile: u8,
+}
+
+impl MouseInfo {
+    pub fn poll_rate(&self) -> PollingRate {
+        self.poll_rate
+    }
+
+    pub fn num_profile(&self) -> u8 {
+        self.num_profile
+    }
+
+    pub fn active_profile(&self) -> u8 {
+        self.active_profile
+    }
+
+    pub fn builder(&self) -> CommandBuilder<MouseInfo> {
+        Command::builder()
+            .poll_rate(self.poll_rate)
+            .num_profile(self.num_profile)
+            .active_profile(self.active_profile)
+    }
+}
 
 #[command_extension]
 impl Command<MouseInfo> {
@@ -66,24 +91,24 @@ impl Command<MouseInfo> {
         CommandBuilder::new(command)
     }
 
-    pub fn poll_rate(&self) -> PollingRate {
-        self.data()[0x0].into()
+    pub fn config(self) -> MouseInfo {
+        let poll_rate = PollingRate::from(self.data()[0x0]);
+        let num_profile = self.data()[0x2];
+        let active_profile = self.data()[0x4];
+
+        MouseInfo {
+            poll_rate,
+            num_profile,
+            active_profile,
+        }
     }
 
     pub fn set_poll_rate(&mut self, rate: PollingRate) {
         self.set_data_byte_with_checksum(rate as u8, 0x0).unwrap();
     }
 
-    pub fn num_profile(&self) -> u8 {
-        self.as_bytes()[0x2]
-    }
-
     pub fn set_num_profile(&mut self, dpi: u8) {
         self.set_data_byte_with_checksum(dpi, 0x2).unwrap();
-    }
-
-    pub fn active_profile(&self) -> u8 {
-        self.as_bytes()[0x4]
     }
 
     pub fn set_active_profile(&mut self, dpi: u8) {

@@ -1,7 +1,17 @@
 use libatk_rs::prelude::*;
 
 #[derive(Command)]
-pub struct FarDistanceMode;
+pub struct FarDistanceMode(bool);
+
+impl FarDistanceMode {
+    fn far_distance_mode(&self) -> bool {
+        self.0
+    }
+
+    fn builder(&self) -> CommandBuilder<FarDistanceMode> {
+        Command::builder().far_distance_mode(self.far_distance_mode())
+    }
+}
 
 #[command_extension]
 impl Command<FarDistanceMode> {
@@ -21,8 +31,8 @@ impl Command<FarDistanceMode> {
         command
     }
 
-    pub fn far_distance_mode(&self) -> bool {
-        self.data()[0x0] == 0x01
+    pub fn config(self) -> FarDistanceMode {
+        FarDistanceMode(self.data()[0x0] == 0x01)
     }
 
     pub fn set_far_distance_mode(&mut self, mode: bool) {

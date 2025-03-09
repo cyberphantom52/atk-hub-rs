@@ -1,7 +1,11 @@
 use libatk_rs::prelude::*;
 
 #[derive(Command)]
-pub struct GetBatteryStatus;
+pub struct GetBatteryStatus {
+    pub level: u8,
+    pub charge: u8,
+    pub voltage: f32,
+}
 
 #[command_extension]
 impl Command<GetBatteryStatus> {
@@ -23,5 +27,13 @@ impl Command<GetBatteryStatus> {
 
     pub fn voltage(&self) -> f32 {
         self.data()[0x2] as f32 / 10f32
+    }
+
+    pub fn config(self) -> GetBatteryStatus {
+        GetBatteryStatus {
+            level: self.level(),
+            charge: self.charge(),
+            voltage: self.voltage(),
+        }
     }
 }
