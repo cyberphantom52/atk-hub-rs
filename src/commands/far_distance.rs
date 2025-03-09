@@ -1,6 +1,6 @@
 use libatk_rs::prelude::*;
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct FarDistanceMode(bool);
 
 impl FarDistanceMode {

@@ -1,6 +1,6 @@
 use libatk_rs::prelude::*;
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct GetBatteryStatus {
     pub level: u8,
     pub charge: u8,

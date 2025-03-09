@@ -1,8 +1,9 @@
 use libatk_rs::prelude::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum SilentHeightMode {
+    #[default]
     Off,
     OneMm,
     TwoMm,
@@ -19,7 +20,7 @@ impl From<u8> for SilentHeightMode {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct SilentHeight {
     mode: SilentHeightMode,
 }

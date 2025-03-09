@@ -63,6 +63,17 @@ pub struct DpiLedSettings {
     enabled: bool,
 }
 
+impl Default for DpiLedSettings {
+    fn default() -> Self {
+        DpiLedSettings {
+            mode: LedEffectMode::Static,
+            brightness: LedBrightnessLevel::Medium,
+            breathing_rate: LedBreathingRate::Medium,
+            enabled: true,
+        }
+    }
+}
+
 impl DpiLedSettings {
     pub fn mode(&self) -> LedEffectMode {
         self.mode

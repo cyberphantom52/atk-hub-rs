@@ -1,8 +1,9 @@
 use libatk_rs::prelude::*;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum PollingRate {
+    #[default]
     Hz1000 = 0x1,
     Hz500 = 0x2,
     Hz250 = 0x4,
@@ -41,7 +42,7 @@ impl From<u8> for PollingRate {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct MouseInfo {
     poll_rate: PollingRate,
     num_profile: u8,

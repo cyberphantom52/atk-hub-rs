@@ -1,6 +1,6 @@
 use libatk_rs::prelude::*;
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct MousePerfSettings {
     stabilization_time: u8,
     motion_sync: bool,
@@ -99,7 +99,7 @@ impl Command<MousePerfSettings> {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct SensorPerfSettings {
     move_close_led: bool,
     sensor_sleep: bool,

@@ -1,8 +1,9 @@
 use libatk_rs::prelude::*;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 #[repr(u8)]
 pub enum ConnectionType {
+    #[default]
     Dongle1K,
     Dongle4K,
     Wired1K,
@@ -25,7 +26,7 @@ impl From<u8> for ConnectionType {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct DownloadData {
     encrypted_data: [u8; 4],
     cid: u8,
@@ -73,7 +74,7 @@ impl Command<DownloadData> {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct DriverStatus(u8);
 
 #[command_extension]
@@ -142,7 +143,7 @@ impl Command<GetWirelessMouseOnline> {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct GetMouseCidMid(u8, u8);
 
 impl GetMouseCidMid {
@@ -170,7 +171,7 @@ impl Command<GetMouseCidMid> {
     }
 }
 
-#[derive(Command)]
+#[derive(Command, Default)]
 pub struct GetMouseVersion(u8, u8);
 
 impl GetMouseVersion {

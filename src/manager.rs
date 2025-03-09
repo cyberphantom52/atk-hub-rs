@@ -1,6 +1,7 @@
 use crate::commands::prelude::*;
 use libatk_rs::device::Device;
 
+#[derive(Default)]
 struct MouseConfig {
     battery: GetBatteryStatus,
     download_data: DownloadData,
