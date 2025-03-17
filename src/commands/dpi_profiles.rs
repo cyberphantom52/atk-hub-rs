@@ -154,9 +154,27 @@ impl TryFrom<EEPROMAddress> for DpiPair {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct DpiProfile {
+    dpi: Dpi,
+    color: Color,
+}
+
+impl DpiProfile {
+    pub fn new(dpi: Dpi, color: Color) -> Self {
+        DpiProfile { dpi, color }
+    }
+}
+
+impl std::fmt::Display for DpiProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "DPI: {} | Color: {}", self.dpi, self.color)
+    }
+}
+
 #[derive(Command, Debug)]
 pub struct DpiPairSetting {
-    pair: DpiPair,
+    _pair: DpiPair,
     dpi_first: Dpi,
     dpi_second: Dpi,
 }
@@ -171,7 +189,7 @@ impl DpiPairSetting {
     }
 
     pub fn builder(&self) -> CommandBuilder<DpiPairSetting> {
-        Command::<DpiPairSetting>::builder(self.pair)
+        Command::<DpiPairSetting>::builder(self._pair)
             .dpi_first(self.dpi_first().dpi())
             .dpi_second(self.dpi_second().dpi())
     }
@@ -204,7 +222,7 @@ impl Command<DpiPairSetting> {
         let dpi1 = Dpi::from_bytes(&data[0..4]).expect("Failed to parse DPI #1");
         let dpi2 = Dpi::from_bytes(&data[4..8]).expect("Failed to parse DPI #2");
         DpiPairSetting {
-            pair,
+            _pair: pair,
             dpi_first: dpi1,
             dpi_second: dpi2,
         }
@@ -225,7 +243,7 @@ impl Command<DpiPairSetting> {
 
 #[derive(Command, Debug)]
 pub struct ColorPairSetting {
-    pair: DpiPair,
+    _pair: DpiPair,
     color_first: Color,
     color_second: Color,
 }
@@ -240,7 +258,7 @@ impl ColorPairSetting {
     }
 
     pub fn builder(&self) -> CommandBuilder<ColorPairSetting> {
-        Command::<ColorPairSetting>::builder(self.pair)
+        Command::<ColorPairSetting>::builder(self._pair)
             .color_first(self.color_first())
             .color_second(self.color_second())
     }
@@ -272,7 +290,7 @@ impl Command<ColorPairSetting> {
         let color1 = Color::from_bytes(&data[0..4]).expect("Failed to parse color #1");
         let color2 = Color::from_bytes(&data[4..8]).expect("Failed to parse color #2");
         ColorPairSetting {
-            pair,
+            _pair: pair,
             color_first: color1,
             color_second: color2,
         }
