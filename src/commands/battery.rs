@@ -7,6 +7,12 @@ pub struct GetBatteryStatus {
     pub voltage: f32,
 }
 
+impl std::fmt::Display for GetBatteryStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Battery Level: {}%", self.level())
+    }
+}
+
 impl GetBatteryStatus {
     pub fn level(&self) -> u8 {
         self.level

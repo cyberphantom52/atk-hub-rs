@@ -49,6 +49,12 @@ pub struct MouseInfo {
     active_profile: u8,
 }
 
+impl std::fmt::Display for MouseInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Polling Rate: {}", self.poll_rate())
+    }
+}
+
 impl MouseInfo {
     pub fn poll_rate(&self) -> PollingRate {
         self.poll_rate

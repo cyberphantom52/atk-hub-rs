@@ -34,6 +34,12 @@ pub struct DownloadData {
     device_type: ConnectionType,
 }
 
+impl std::fmt::Display for DownloadData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
+    }
+}
+
 impl DownloadData {
     pub fn encrypted_data(&self) -> &[u8; 4] {
         &self.encrypted_data
@@ -153,6 +159,12 @@ impl GetMouseCidMid {
 
     pub fn mid(&self) -> u8 {
         self.1
+    }
+}
+
+impl std::fmt::Display for GetMouseCidMid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
     }
 }
 

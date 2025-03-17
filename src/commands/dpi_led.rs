@@ -63,6 +63,19 @@ pub struct DpiLedSettings {
     enabled: bool,
 }
 
+impl std::fmt::Display for DpiLedSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Enabled: {} | Mode: {:?} | Brightness: {:?} | Breating Rate: {:?}",
+            self.enabled(),
+            self.mode(),
+            self.brightness(),
+            self.breathing_rate()
+        )
+    }
+}
+
 impl Default for DpiLedSettings {
     fn default() -> Self {
         DpiLedSettings {

@@ -9,6 +9,20 @@ pub struct MousePerfSettings {
     ripple_control: bool,
 }
 
+impl std::fmt::Display for MousePerfSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Keystroke Anti-Shake Delay: {}ms | Move Syncronization: {} | Close LED Time: {} | Angle Snapping: {} | Ripple Control: {}",
+            self.stabilization_time(),
+            self.motion_sync(),
+            self.close_led_time(),
+            self.linear_correction(),
+            self.ripple_control()
+        )
+    }
+}
+
 impl MousePerfSettings {
     pub fn stabilization_time(&self) -> u8 {
         self.stabilization_time
@@ -108,6 +122,19 @@ pub struct SensorPerfSettings {
     rf_tx_time: u8,
 }
 
+impl std::fmt::Display for SensorPerfSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Move Close LED: {} | Sensor Sleep: {} | Sensor Sleep Time: {} | Peformance Mode: {} | RF Tx Time: {}",
+            self.move_close_led(),
+            self.sensor_sleep(),
+            self.sensor_sleep_time(),
+            self.performance_mode(),
+            self.rf_tx_time()
+        )
+    }
+}
 impl SensorPerfSettings {
     pub fn move_close_led(&self) -> bool {
         self.move_close_led

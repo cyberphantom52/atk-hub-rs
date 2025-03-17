@@ -3,6 +3,12 @@ use libatk_rs::prelude::*;
 #[derive(Command, Default, Debug)]
 pub struct FarDistanceMode(bool);
 
+impl std::fmt::Display for FarDistanceMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ultra Long Range Mode: {}", self.far_distance_mode())
+    }
+}
+
 impl FarDistanceMode {
     fn far_distance_mode(&self) -> bool {
         self.0
