@@ -1,10 +1,11 @@
+use crate::types::{Decaseconds, Duration, Milliseconds, Seconds};
 use libatk_rs::prelude::*;
 
 #[derive(Command, Default, Debug)]
 pub struct MousePerfSettings {
-    stabilization_time: u8,
+    stabilization_time: Duration<Milliseconds>,
     motion_sync: bool,
-    close_led_time: u8,
+    close_led_time: Duration<Decaseconds>,
     linear_correction: bool,
     ripple_control: bool,
 }
@@ -13,7 +14,7 @@ impl std::fmt::Display for MousePerfSettings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Keystroke Anti-Shake Delay: {}ms | Move Syncronization: {} | Close LED Time: {} | Angle Snapping: {} | Ripple Control: {}",
+            "Keystroke Anti-Shake Delay: {} | Move Syncronization: {} | Close LED Time: {} | Angle Snapping: {} | Ripple Control: {}",
             self.stabilization_time(),
             self.motion_sync(),
             self.close_led_time(),
@@ -24,7 +25,7 @@ impl std::fmt::Display for MousePerfSettings {
 }
 
 impl MousePerfSettings {
-    pub fn stabilization_time(&self) -> u8 {
+    pub fn stabilization_time(&self) -> Duration<Milliseconds> {
         self.stabilization_time
     }
 
@@ -32,8 +33,8 @@ impl MousePerfSettings {
         self.motion_sync
     }
 
-    pub fn close_led_time(&self) -> u8 {
-        self.close_led_time
+    pub fn close_led_time(&self) -> Duration<Seconds> {
+        self.close_led_time.convert()
     }
 
     pub fn linear_correction(&self) -> bool {
@@ -77,9 +78,9 @@ impl Command<MousePerfSettings> {
     }
 
     pub fn config(self) -> MousePerfSettings {
-        let stabilization_time = self.data()[0x0];
+        let stabilization_time = Duration::<Milliseconds>::new(self.data()[0x0] as u32);
         let motion_sync = self.data()[0x2] == 0x1;
-        let close_led_time = self.data()[0x4];
+        let close_led_time = Duration::<Decaseconds>::new(self.data()[0x4] as u32);
         let linear_correction = self.data()[0x6] == 0x1;
         let ripple_control = self.data()[0x8] == 0x1;
 
@@ -92,16 +93,18 @@ impl Command<MousePerfSettings> {
         }
     }
 
-    pub fn set_stabilization_time(&mut self, value: u8) {
-        self.set_data_byte_with_checksum(value, 0x0).unwrap();
+    pub fn set_stabilization_time(&mut self, value: Duration<Milliseconds>) {
+        self.set_data_byte_with_checksum(value.as_unit() as u8, 0x0)
+            .unwrap();
     }
 
     pub fn set_motion_sync(&mut self, value: bool) {
         self.set_data_byte_with_checksum(value as u8, 0x2).unwrap();
     }
 
-    pub fn set_close_led_time(&mut self, value: u8) {
-        self.set_data_byte_with_checksum(value, 0x4).unwrap();
+    pub fn set_close_led_time(&mut self, value: Duration<Decaseconds>) {
+        self.set_data_byte_with_checksum(value.as_unit() as u8, 0x4)
+            .unwrap();
     }
 
     pub fn set_linear_correction(&mut self, value: bool) {
@@ -117,9 +120,9 @@ impl Command<MousePerfSettings> {
 pub struct SensorPerfSettings {
     move_close_led: bool,
     sensor_sleep: bool,
-    sensor_sleep_time: u8,
+    sensor_sleep_time: Duration<Decaseconds>,
     performance_mode: bool,
-    rf_tx_time: u8,
+    rf_tx_time: Duration<Milliseconds>,
 }
 
 impl std::fmt::Display for SensorPerfSettings {
@@ -144,15 +147,15 @@ impl SensorPerfSettings {
         self.sensor_sleep
     }
 
-    pub fn sensor_sleep_time(&self) -> u8 {
-        self.sensor_sleep_time
+    pub fn sensor_sleep_time(&self) -> Duration<Seconds> {
+        self.sensor_sleep_time.convert()
     }
 
     pub fn performance_mode(&self) -> bool {
         self.performance_mode
     }
 
-    pub fn rf_tx_time(&self) -> u8 {
+    pub fn rf_tx_time(&self) -> Duration<Milliseconds> {
         self.rf_tx_time
     }
 
@@ -191,9 +194,9 @@ impl Command<SensorPerfSettings> {
     pub fn config(self) -> SensorPerfSettings {
         let move_close_led = self.data()[0x0] == 0x1;
         let sensor_sleep = self.data()[0x2] == 0x1;
-        let sensor_sleep_time = self.data()[0x4];
+        let sensor_sleep_time = Duration::<Decaseconds>::new(self.data()[0x4] as u32);
         let performance_mode = self.data()[0x6] == 0x1;
-        let rf_tx_time = self.data()[0x8];
+        let rf_tx_time = Duration::<Milliseconds>::new(self.data()[0x8] as u32);
 
         SensorPerfSettings {
             move_close_led,
@@ -212,15 +215,17 @@ impl Command<SensorPerfSettings> {
         self.set_data_byte_with_checksum(value as u8, 0x2).unwrap();
     }
 
-    pub fn set_sensor_sleep_time(&mut self, value: u8) {
-        self.set_data_byte_with_checksum(value, 0x4).unwrap();
+    pub fn set_sensor_sleep_time(&mut self, value: Duration<Decaseconds>) {
+        self.set_data_byte_with_checksum(value.as_unit() as u8, 0x4)
+            .unwrap();
     }
 
     pub fn set_performance_mode(&mut self, value: bool) {
         self.set_data_byte_with_checksum(value as u8, 0x6).unwrap();
     }
 
-    pub fn set_rf_tx_time(&mut self, value: u8) {
-        self.set_data_byte_with_checksum(value, 0x8).unwrap();
+    pub fn set_rf_tx_time(&mut self, value: Duration<Milliseconds>) {
+        self.set_data_byte_with_checksum(value.as_unit() as u8, 0x8)
+            .unwrap();
     }
 }
