@@ -113,102 +113,179 @@ impl Color {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum Profile {
-    Profile1,
-    Profile2,
-    Profile3,
-    Profile4,
-    Profile5,
-    Profile6,
-    Profile7,
-    Profile8,
+pub enum DpiPair {
+    Pair1,
+    Pair2,
+    Pair3,
+    Pair4,
 }
 
-impl Profile {
-    pub fn offset(&self) -> usize {
+impl DpiPair {
+    pub fn dpi_eeprom_address(&self) -> EEPROMAddress {
         match self {
-            Profile::Profile1 | Profile::Profile3 | Profile::Profile5 | Profile::Profile7 => 0x0,
-            Profile::Profile2 | Profile::Profile4 | Profile::Profile6 | Profile::Profile8 => 0x4,
+            DpiPair::Pair1 => EEPROMAddress::DpiPair1,
+            DpiPair::Pair2 => EEPROMAddress::DpiPair3,
+            DpiPair::Pair3 => EEPROMAddress::DpiPair5,
+            DpiPair::Pair4 => EEPROMAddress::DpiPair7,
         }
     }
 
-    pub fn dpi(&self) -> EEPROMAddress {
+    pub fn color_eeprom_address(&self) -> EEPROMAddress {
         match self {
-            Profile::Profile1 | Profile::Profile2 => EEPROMAddress::DpiPair1,
-            Profile::Profile3 | Profile::Profile4 => EEPROMAddress::DpiPair3,
-            Profile::Profile5 | Profile::Profile6 => EEPROMAddress::DpiPair5,
-            Profile::Profile7 | Profile::Profile8 => EEPROMAddress::DpiPair7,
-        }
-    }
-
-    pub fn color(&self) -> EEPROMAddress {
-        match self {
-            Profile::Profile1 | Profile::Profile2 => EEPROMAddress::DpiPair1Color,
-            Profile::Profile3 | Profile::Profile4 => EEPROMAddress::DpiPair3Color,
-            Profile::Profile5 | Profile::Profile6 => EEPROMAddress::DpiPair5Color,
-            Profile::Profile7 | Profile::Profile8 => EEPROMAddress::DpiPair7Color,
+            DpiPair::Pair1 => EEPROMAddress::DpiPair1Color,
+            DpiPair::Pair2 => EEPROMAddress::DpiPair3Color,
+            DpiPair::Pair3 => EEPROMAddress::DpiPair5Color,
+            DpiPair::Pair4 => EEPROMAddress::DpiPair7Color,
         }
     }
 }
 
-#[derive(Command)]
-pub struct DpiSetting;
+impl TryFrom<EEPROMAddress> for DpiPair {
+    type Error = &'static str;
+
+    fn try_from(value: EEPROMAddress) -> Result<Self, Self::Error> {
+        match value {
+            EEPROMAddress::DpiPair1 | EEPROMAddress::DpiPair1Color => Ok(DpiPair::Pair1),
+            EEPROMAddress::DpiPair3 | EEPROMAddress::DpiPair3Color => Ok(DpiPair::Pair2),
+            EEPROMAddress::DpiPair5 | EEPROMAddress::DpiPair5Color => Ok(DpiPair::Pair3),
+            EEPROMAddress::DpiPair7 | EEPROMAddress::DpiPair7Color => Ok(DpiPair::Pair4),
+            _ => Err("Invalid EEPROM address"),
+        }
+    }
+}
+
+#[derive(Command, Debug)]
+pub struct DpiPairSetting {
+    pair: DpiPair,
+    dpi_first: Dpi,
+    dpi_second: Dpi,
+}
+
+impl DpiPairSetting {
+    pub fn dpi_first(&self) -> Dpi {
+        self.dpi_first
+    }
+
+    pub fn dpi_second(&self) -> Dpi {
+        self.dpi_second
+    }
+
+    pub fn builder(&self) -> CommandBuilder<DpiPairSetting> {
+        Command::<DpiPairSetting>::builder(self.pair)
+            .dpi_first(self.dpi_first().dpi())
+            .dpi_second(self.dpi_second().dpi())
+    }
+}
 
 #[command_extension]
-impl Command<DpiSetting> {
-    pub fn query(profile: Profile) -> Self {
+impl Command<DpiPairSetting> {
+    pub fn query(pair: DpiPair) -> Self {
         let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
-        instance.set_eeprom_address(profile.dpi());
+        instance.set_eeprom_address(pair.dpi_eeprom_address());
         instance.set_data_len(0x8).unwrap();
 
         instance
     }
 
-    pub fn builder(self) -> CommandBuilder<DpiSetting> {
-        let mut command = self;
+    pub fn builder(pair: DpiPair) -> CommandBuilder<DpiPairSetting> {
+        let mut command = Command::default();
         command.set_id(CommandId::SetEEPROM);
+        command.set_eeprom_address(pair.dpi_eeprom_address());
+        command.set_data_len(0x8).unwrap();
+
         CommandBuilder::new(command)
     }
 
-    pub fn dpi(&self, profile: Profile) -> Dpi {
-        Dpi::from_bytes(&self.data()[profile.offset()..profile.offset() + 0x4])
-            .expect("Failed to parse DPI")
+    pub fn config(self) -> DpiPairSetting {
+        let data = self.data();
+        let pair = DpiPair::try_from(self.eeprom_address())
+            .expect("Failed to parse EEPROM address to DPI pair");
+        let dpi1 = Dpi::from_bytes(&data[0..4]).expect("Failed to parse DPI #1");
+        let dpi2 = Dpi::from_bytes(&data[4..8]).expect("Failed to parse DPI #2");
+        DpiPairSetting {
+            pair,
+            dpi_first: dpi1,
+            dpi_second: dpi2,
+        }
     }
 
-    pub fn set_dpi(&mut self, profile: Profile, dpi: u16) {
-        self.set_data(Dpi::from(dpi).to_bytes().as_ref(), profile.offset())
-            .expect("Failed to set DPI");
+    pub fn set_dpi_first(&mut self, dpi: u16) {
+        let bytes = Dpi::from(dpi).to_bytes();
+        self.set_data(&bytes, 0)
+            .expect("Failed to set first DPI value");
+    }
+
+    pub fn set_dpi_second(&mut self, dpi: u16) {
+        let bytes = Dpi::from(dpi).to_bytes();
+        self.set_data(&bytes, 4)
+            .expect("Failed to set second DPI value");
     }
 }
 
-#[derive(Command)]
-pub struct DpiColorSetting;
+#[derive(Command, Debug)]
+pub struct ColorPairSetting {
+    pair: DpiPair,
+    color_first: Color,
+    color_second: Color,
+}
+
+impl ColorPairSetting {
+    pub fn color_first(&self) -> Color {
+        self.color_first
+    }
+
+    pub fn color_second(&self) -> Color {
+        self.color_second
+    }
+
+    pub fn builder(&self) -> CommandBuilder<ColorPairSetting> {
+        Command::<ColorPairSetting>::builder(self.pair)
+            .color_first(self.color_first())
+            .color_second(self.color_second())
+    }
+}
 
 #[command_extension]
-impl Command<DpiColorSetting> {
-    pub fn query(profile: Profile) -> Self {
+impl Command<ColorPairSetting> {
+    pub fn query(pair: DpiPair) -> Self {
         let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
-        instance.set_eeprom_address(profile.color());
+        instance.set_eeprom_address(pair.color_eeprom_address());
         instance.set_data_len(0x8).unwrap();
-
         instance
     }
 
-    pub fn builder(self) -> CommandBuilder<DpiColorSetting> {
-        let mut command = self;
+    pub fn builder(pair: DpiPair) -> CommandBuilder<ColorPairSetting> {
+        let mut command = Command::default();
         command.set_id(CommandId::SetEEPROM);
+        command.set_eeprom_address(pair.color_eeprom_address());
+        command.set_data_len(0x8).unwrap();
+
         CommandBuilder::new(command)
     }
 
-    pub fn color(&self, profile: Profile) -> Color {
-        Color::from_bytes(&self.data()[profile.offset()..profile.offset() + 0x4])
-            .expect("Failed to parse color")
+    pub fn config(self) -> ColorPairSetting {
+        let data = self.data();
+        let pair = DpiPair::try_from(self.eeprom_address())
+            .expect("Failed to parse EEPROM address to DPI pair");
+        let color1 = Color::from_bytes(&data[0..4]).expect("Failed to parse color #1");
+        let color2 = Color::from_bytes(&data[4..8]).expect("Failed to parse color #2");
+        ColorPairSetting {
+            pair,
+            color_first: color1,
+            color_second: color2,
+        }
     }
 
-    pub fn set_color(&mut self, profile: Profile, color: Color) {
-        self.set_data(color.to_bytes().as_ref(), profile.offset())
-            .expect("Failed to set color");
+    pub fn set_color_first(&mut self, color: Color) {
+        let bytes = color.to_bytes();
+        self.set_data(&bytes, 0).expect("Failed to set first color");
+    }
+
+    pub fn set_color_second(&mut self, color: Color) {
+        let bytes = color.to_bytes();
+        self.set_data(&bytes, 4)
+            .expect("Failed to set second color");
     }
 }
