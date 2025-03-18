@@ -177,4 +177,85 @@ impl MouseManager {
             Ok(resp.config())
         })
     }
+
+    pub fn set_stabilization_time(
+        &self,
+        time: Duration<Milliseconds>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .stabilization_time(time)
+                .build();
+
+            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_motion_sync(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .motion_sync(value)
+                .build();
+
+            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn close_led_time(
+        &self,
+        time: Duration<Decaseconds>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .close_led_time(time)
+                .build();
+
+            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_angle_snapping(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .linear_correction(value)
+                .build();
+
+            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_ripple_control(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .ripple_control(value)
+                .build();
+
+            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
 }
