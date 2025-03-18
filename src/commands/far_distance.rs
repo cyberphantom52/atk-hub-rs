@@ -10,11 +10,11 @@ impl std::fmt::Display for FarDistanceMode {
 }
 
 impl FarDistanceMode {
-    fn far_distance_mode(&self) -> bool {
+    pub fn far_distance_mode(&self) -> bool {
         self.0
     }
 
-    fn builder(&self) -> CommandBuilder<FarDistanceMode> {
+    pub fn builder(&self) -> CommandBuilder<FarDistanceMode> {
         Command::builder().far_distance_mode(self.far_distance_mode())
     }
 }
