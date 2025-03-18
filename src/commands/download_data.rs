@@ -53,7 +53,7 @@ impl DownloadData {
         self.mid
     }
 
-    pub fn device_type(&self) -> ConnectionType {
+    pub fn connection_type(&self) -> ConnectionType {
         self.device_type
     }
 }

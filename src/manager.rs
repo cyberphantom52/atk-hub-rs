@@ -186,7 +186,7 @@ impl MouseManager {
         self.wrapper(|_| {
             let resp = Command::<DownloadData>::query().execute(&self.device)?;
 
-            Ok(resp.config().device_type())
+            Ok(resp.config().connection_type())
         })
     }
 
