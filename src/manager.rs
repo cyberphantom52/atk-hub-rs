@@ -319,6 +319,76 @@ impl MouseManager {
         })
     }
 
+    pub fn set_dpi_led_enabled(&self, enabled: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .dpi_led_settings()
+                .builder()
+                .enabled(enabled)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_dpi_led_mode(&self, mode: LedEffectMode) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .dpi_led_settings()
+                .builder()
+                .effect_mode(mode)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_dpi_led_brightness(
+        &self,
+        brightness: LedBrightnessLevel,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .dpi_led_settings()
+                .builder()
+                .brightness_level(brightness)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_dpi_led_breathing_rate(
+        &self,
+        rate: LedBreathingRate,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .dpi_led_settings()
+                .builder()
+                .breathing_rate(rate)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
+
     pub fn set_dpi_led_settings(
         &self,
         enabled: Option<bool>,
