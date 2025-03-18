@@ -11,6 +11,12 @@ impl std::fmt::Display for Dpi {
     }
 }
 
+impl Default for Dpi {
+    fn default() -> Self {
+        Dpi(1600)
+    }
+}
+
 impl From<u16> for Dpi {
     fn from(value: u16) -> Self {
         Dpi(value)
@@ -67,6 +73,16 @@ pub struct Color {
     blue: u8,
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        Color {
+            red: 0xFF,
+            green: 0xFF,
+            blue: 0xFF,
+        }
+    }
+}
+
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "#{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
@@ -113,11 +129,62 @@ impl Color {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum DpiProfile {
+    Profile1,
+    Profile2,
+    Profile3,
+    Profile4,
+    Profile5,
+    Profile6,
+    Profile7,
+    Profile8,
+}
+
+impl TryFrom<u8> for DpiProfile {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(DpiProfile::Profile1),
+            1 => Ok(DpiProfile::Profile2),
+            2 => Ok(DpiProfile::Profile3),
+            3 => Ok(DpiProfile::Profile4),
+            4 => Ok(DpiProfile::Profile5),
+            5 => Ok(DpiProfile::Profile6),
+            6 => Ok(DpiProfile::Profile7),
+            7 => Ok(DpiProfile::Profile8),
+            _ => Err("Invalid DPI profile"),
+        }
+    }
+}
+
+impl From<DpiProfile> for DpiPair {
+    fn from(value: DpiProfile) -> Self {
+        DpiPair::try_from(value as u8).unwrap()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
 pub enum DpiPair {
+    #[default]
     Pair1,
     Pair2,
     Pair3,
     Pair4,
+}
+
+impl TryFrom<u8> for DpiPair {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        let pair = value / 2;
+        match pair {
+            0 => Ok(DpiPair::Pair1),
+            1 => Ok(DpiPair::Pair2),
+            2 => Ok(DpiPair::Pair3),
+            3 => Ok(DpiPair::Pair4),
+            _ => Err("Invalid DPI pair"),
+        }
+    }
 }
 
 impl DpiPair {
@@ -155,24 +222,24 @@ impl TryFrom<EEPROMAddress> for DpiPair {
 }
 
 #[derive(Debug, Clone)]
-pub struct DpiProfile {
+pub struct Gear {
     dpi: Dpi,
     color: Color,
 }
 
-impl DpiProfile {
+impl Gear {
     pub fn new(dpi: Dpi, color: Color) -> Self {
-        DpiProfile { dpi, color }
+        Gear { dpi, color }
     }
 }
 
-impl std::fmt::Display for DpiProfile {
+impl std::fmt::Display for Gear {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "DPI: {} | Color: {}", self.dpi, self.color)
     }
 }
 
-#[derive(Command, Debug)]
+#[derive(Command, Debug, Default)]
 pub struct DpiPairSetting {
     _pair: DpiPair,
     dpi_first: Dpi,
@@ -190,8 +257,8 @@ impl DpiPairSetting {
 
     pub fn builder(&self) -> CommandBuilder<DpiPairSetting> {
         Command::<DpiPairSetting>::builder(self._pair)
-            .dpi_first(self.dpi_first().dpi())
-            .dpi_second(self.dpi_second().dpi())
+            .dpi_first(self.dpi_first())
+            .dpi_second(self.dpi_second())
     }
 }
 
@@ -228,20 +295,20 @@ impl Command<DpiPairSetting> {
         }
     }
 
-    pub fn set_dpi_first(&mut self, dpi: u16) {
-        let bytes = Dpi::from(dpi).to_bytes();
+    pub fn set_dpi_first(&mut self, dpi: Dpi) {
+        let bytes = dpi.to_bytes();
         self.set_data(&bytes, 0)
             .expect("Failed to set first DPI value");
     }
 
-    pub fn set_dpi_second(&mut self, dpi: u16) {
-        let bytes = Dpi::from(dpi).to_bytes();
+    pub fn set_dpi_second(&mut self, dpi: Dpi) {
+        let bytes = dpi.to_bytes();
         self.set_data(&bytes, 4)
             .expect("Failed to set second DPI value");
     }
 }
 
-#[derive(Command, Debug)]
+#[derive(Command, Debug, Default)]
 pub struct ColorPairSetting {
     _pair: DpiPair,
     color_first: Color,

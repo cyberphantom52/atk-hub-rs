@@ -8,8 +8,8 @@ use libatk_rs::prelude::*;
 
 #[derive(Default, Debug)]
 pub struct Profile {
-    dpi: Vec<DpiPairSetting>,
-    dpi_color: Vec<ColorPairSetting>,
+    dpi: [DpiPairSetting; 4],
+    dpi_color: [ColorPairSetting; 4],
     dpi_led: DpiLedSettings,
     far_distance: FarDistanceMode,
     mouse_info: MouseInfo,
@@ -43,12 +43,16 @@ impl Profile {
         &self.silent_mode
     }
 
-    pub fn dpi_profile(&self, pair: DpiPair) -> (DpiProfile, DpiProfile) {
+    pub fn dpi_pair_setting(&self, pair: DpiPair) -> &DpiPairSetting {
+        &self.dpi[pair as usize]
+    }
+
+    pub fn dpi_profile(&self, pair: DpiPair) -> (Gear, Gear) {
         let dpi = &self.dpi[pair as usize];
         let color = &self.dpi_color[pair as usize];
         (
-            DpiProfile::new(dpi.dpi_first(), color.color_first()),
-            DpiProfile::new(dpi.dpi_second(), color.color_second()),
+            Gear::new(dpi.dpi_first(), color.color_first()),
+            Gear::new(dpi.dpi_second(), color.color_second()),
         )
     }
 }
@@ -104,7 +108,7 @@ impl MouseManager {
         self.profile.borrow_mut().mouse_info =
             self.device.execute(Command::<MouseInfo>::query())?.config();
 
-        self.profile.borrow_mut().dpi.extend([
+        self.profile.borrow_mut().dpi = [
             self.device
                 .execute(Command::<DpiPairSetting>::query(DpiPair::Pair1))?
                 .config(),
@@ -117,9 +121,9 @@ impl MouseManager {
             self.device
                 .execute(Command::<DpiPairSetting>::query(DpiPair::Pair4))?
                 .config(),
-        ]);
+        ];
 
-        self.profile.borrow_mut().dpi_color.extend([
+        self.profile.borrow_mut().dpi_color = [
             self.device
                 .execute(Command::<ColorPairSetting>::query(DpiPair::Pair1))?
                 .config(),
@@ -132,7 +136,7 @@ impl MouseManager {
             self.device
                 .execute(Command::<ColorPairSetting>::query(DpiPair::Pair4))?
                 .config(),
-        ]);
+        ];
 
         self.profile.borrow_mut().silent_mode = self
             .device
@@ -456,6 +460,82 @@ impl MouseManager {
                 .execute(&self.device)?;
 
             self.profile.borrow_mut().sensor_perf = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_dpi_profile_color(
+        &self,
+        profile: DpiProfile,
+        color: Color,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let pair = DpiPair::try_from(profile)?;
+            let which = profile as usize % 2;
+
+            let mut builder = self.profile().dpi_color[pair as usize].builder();
+            builder = if which == 0 {
+                builder.color_first(color)
+            } else {
+                builder.color_second(color)
+            };
+
+            let response = builder.build().execute(&self.device)?;
+            self.profile.borrow_mut().dpi_color[pair as usize] = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_dpi_profile_dpi(
+        &self,
+        profile: DpiProfile,
+        dpi: Dpi,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let pair = DpiPair::try_from(profile)?;
+            let which = profile as usize % 2;
+
+            let mut builder = self.profile().dpi[pair as usize].builder();
+            builder = if which == 0 {
+                builder.dpi_first(dpi)
+            } else {
+                builder.dpi_second(dpi)
+            };
+
+            let response = builder.build().execute(&self.device)?;
+            self.profile.borrow_mut().dpi[pair as usize] = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn new_dpi_profile(
+        &self,
+        dpi: Dpi,
+        color: Color,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let num_profile = self.profile().mouse_info().num_profile();
+            if num_profile >= 8 {
+                return Err("Maximum number of profiles reached".into());
+            }
+
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .num_profile(num_profile + 1)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
+
+            let profile = DpiProfile::try_from(num_profile)?;
+
+            self.set_dpi_profile_dpi(profile, dpi)?;
+            self.set_dpi_profile_color(profile, color)?;
 
             Ok(())
         })
