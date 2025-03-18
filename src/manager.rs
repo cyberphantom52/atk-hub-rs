@@ -259,6 +259,54 @@ impl MouseManager {
         })
     }
 
+    pub fn set_mouse_performance_settings(
+        &self,
+        stabilization_time: Option<Duration<Milliseconds>>,
+        motion_sync: Option<bool>,
+        close_led_time: Option<Duration<Decaseconds>>,
+        linear_correction: Option<bool>,
+        ripple_control: Option<bool>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let stabilization_time = stabilization_time.unwrap_or(
+                self.profile()
+                    .mouse_performance_settings()
+                    .stabilization_time(),
+            );
+            let motion_sync =
+                motion_sync.unwrap_or(self.profile().mouse_performance_settings().motion_sync());
+            let close_led_time = close_led_time.unwrap_or(
+                self.profile()
+                    .mouse_performance_settings()
+                    .close_led_time()
+                    .convert(),
+            );
+            let linear_correction = linear_correction.unwrap_or(
+                self.profile()
+                    .mouse_performance_settings()
+                    .linear_correction(),
+            );
+            let ripple_control = ripple_control
+                .unwrap_or(self.profile().mouse_performance_settings().ripple_control());
+
+            let response = self
+                .profile()
+                .mouse_performance_settings()
+                .builder()
+                .stabilization_time(stabilization_time)
+                .motion_sync(motion_sync)
+                .linear_correction(linear_correction)
+                .ripple_control(ripple_control)
+                .close_led_time(close_led_time)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_perf = response.config();
+
+            Ok(())
+        })
+    }
+
     pub fn set_dpi_led_settings(
         &self,
         enabled: Option<bool>,
@@ -319,6 +367,87 @@ impl MouseManager {
                 .execute(&self.device)?;
 
             self.profile.borrow_mut().silent_mode = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_move_close_led(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .sensor_performance_settings()
+                .builder()
+                .move_close_led(value)
+                .build();
+
+            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_sensor_sleep(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .sensor_performance_settings()
+                .builder()
+                .sensor_sleep(value)
+                .build();
+
+            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_performance_mode(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let command = self
+                .profile()
+                .sensor_performance_settings()
+                .builder()
+                .performance_mode(value)
+                .build();
+
+            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_sensor_performance_settings(
+        &self,
+        move_close_led: Option<bool>,
+        sensor_sleep: Option<bool>,
+        performance_mode: Option<bool>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let move_close_led = move_close_led.unwrap_or(
+                self.profile()
+                    .sensor_performance_settings()
+                    .move_close_led(),
+            );
+            let sensor_sleep =
+                sensor_sleep.unwrap_or(self.profile().sensor_performance_settings().sensor_sleep());
+            let performance_mode = performance_mode.unwrap_or(
+                self.profile()
+                    .sensor_performance_settings()
+                    .performance_mode(),
+            );
+
+            let response = self
+                .profile()
+                .sensor_performance_settings()
+                .builder()
+                .move_close_led(move_close_led)
+                .sensor_sleep(sensor_sleep)
+                .performance_mode(performance_mode)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().sensor_perf = response.config();
 
             Ok(())
         })
