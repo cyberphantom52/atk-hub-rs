@@ -288,4 +288,39 @@ impl MouseManager {
             Ok(())
         })
     }
+
+    pub fn set_far_distance_mode(&self, mode: bool) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .far_distance_mode()
+                .builder()
+                .far_distance_mode(mode)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().far_distance = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_silent_height(
+        &self,
+        height: SilentHeightMode,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .silent_height()
+                .builder()
+                .silent_height(height)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().silent_mode = response.config();
+
+            Ok(())
+        })
+    }
 }
