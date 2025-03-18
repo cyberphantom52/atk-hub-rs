@@ -172,9 +172,17 @@ impl MouseManager {
 
     pub fn battery_level(&self) -> Result<GetBatteryStatus, Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let resp = self.device.execute(Command::<GetBatteryStatus>::query())?;
+            let resp = Command::<GetBatteryStatus>::query().execute(&self.device)?;
 
             Ok(resp.config())
+        })
+    }
+
+    pub fn connection_type(&self) -> Result<ConnectionType, Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let resp = Command::<DownloadData>::query().execute(&self.device)?;
+
+            Ok(resp.config().device_type())
         })
     }
 
