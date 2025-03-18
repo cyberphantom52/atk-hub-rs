@@ -169,4 +169,12 @@ impl MouseManager {
     pub fn profile(&self) -> Ref<Profile> {
         self.profile.borrow()
     }
+
+    pub fn battery_level(&self) -> Result<GetBatteryStatus, Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let resp = self.device.execute(Command::<GetBatteryStatus>::query())?;
+
+            Ok(resp.config())
+        })
+    }
 }
