@@ -258,4 +258,34 @@ impl MouseManager {
             Ok(())
         })
     }
+
+    pub fn set_dpi_led_settings(
+        &self,
+        enabled: Option<bool>,
+        mode: Option<LedEffectMode>,
+        brightness: Option<LedBrightnessLevel>,
+        rate: Option<LedBreathingRate>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let enabled = enabled.unwrap_or(self.profile().dpi_led_settings().enabled());
+            let mode = mode.unwrap_or(self.profile().dpi_led_settings().mode());
+            let brightness = brightness.unwrap_or(self.profile().dpi_led_settings().brightness());
+            let rate = rate.unwrap_or(self.profile().dpi_led_settings().breathing_rate());
+
+            let response = self
+                .profile()
+                .dpi_led_settings()
+                .builder()
+                .enabled(enabled)
+                .effect_mode(mode)
+                .brightness_level(brightness)
+                .breathing_rate(rate)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
 }
