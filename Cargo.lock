@@ -50,9 +50,9 @@ dependencies = [
 
 [[package]]
 name = "libatk-rs"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9c8fbf430eac27abdd9e24c3de2c57a5d3082d7e619a445a386b1c6f5a365a5"
+checksum = "3aad14d473cbc31d412814b4eb17f159be2cf64a1b3e3fcaf16d917468026358"
 dependencies = [
  "hidapi",
  "libatk-derive",
