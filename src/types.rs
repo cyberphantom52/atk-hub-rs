@@ -71,10 +71,6 @@ impl<T: TimeUnit> Duration<T> {
         self.value / T::FACTOR
     }
 
-    pub fn as_millis(&self) -> u32 {
-        self.value
-    }
-
     pub fn convert<U: TimeUnit>(self) -> Duration<U> {
         Duration {
             value: self.value,

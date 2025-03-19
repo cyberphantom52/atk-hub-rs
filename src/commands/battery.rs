@@ -13,6 +13,7 @@ impl std::fmt::Display for GetBatteryStatus {
     }
 }
 
+#[allow(dead_code)]
 impl GetBatteryStatus {
     pub fn level(&self) -> u8 {
         self.level

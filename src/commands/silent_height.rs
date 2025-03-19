@@ -23,13 +23,14 @@ impl From<u8> for SilentHeightMode {
 #[derive(Command, Default, Debug)]
 pub struct SilentHeight(SilentHeightMode);
 
+#[allow(dead_code)]
 impl SilentHeight {
     pub fn silent_height(&self) -> SilentHeightMode {
         self.0
     }
 
     pub fn builder(&self) -> CommandBuilder<Self> {
-        Command::builder().silent_height(self.0)
+        Command::builder().silent_height(self.silent_height())
     }
 }
 

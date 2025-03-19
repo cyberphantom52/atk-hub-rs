@@ -246,6 +246,7 @@ pub struct DpiPairSetting {
     dpi_second: Dpi,
 }
 
+#[allow(dead_code)]
 impl DpiPairSetting {
     pub fn dpi_first(&self) -> Dpi {
         self.dpi_first
@@ -315,6 +316,7 @@ pub struct ColorPairSetting {
     color_second: Color,
 }
 
+#[allow(dead_code)]
 impl ColorPairSetting {
     pub fn color_first(&self) -> Color {
         self.color_first

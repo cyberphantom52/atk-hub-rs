@@ -18,6 +18,7 @@ pub struct Profile {
     silent_mode: SilentHeight,
 }
 
+#[allow(dead_code)]
 impl Profile {
     pub fn dpi_led_settings(&self) -> &DpiLedSettings {
         &self.dpi_led
@@ -62,6 +63,7 @@ pub struct MouseManager {
     device: Device,
 }
 
+#[allow(dead_code)]
 impl MouseManager {
     pub fn new(device: Device) -> Result<Self, Box<dyn std::error::Error>> {
         let mut instance = Self {

@@ -55,6 +55,7 @@ impl std::fmt::Display for MouseInfo {
     }
 }
 
+#[allow(dead_code)]
 impl MouseInfo {
     pub fn poll_rate(&self) -> PollingRate {
         self.poll_rate

@@ -24,6 +24,7 @@ impl std::fmt::Display for MousePerfSettings {
     }
 }
 
+#[allow(dead_code)]
 impl MousePerfSettings {
     pub fn stabilization_time(&self) -> Duration<Milliseconds> {
         self.stabilization_time
@@ -138,6 +139,8 @@ impl std::fmt::Display for SensorPerfSettings {
         )
     }
 }
+
+#[allow(dead_code)]
 impl SensorPerfSettings {
     pub fn move_close_led(&self) -> bool {
         self.move_close_led

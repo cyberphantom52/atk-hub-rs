@@ -9,6 +9,7 @@ impl std::fmt::Display for FarDistanceMode {
     }
 }
 
+#[allow(dead_code)]
 impl FarDistanceMode {
     pub fn far_distance_mode(&self) -> bool {
         self.0

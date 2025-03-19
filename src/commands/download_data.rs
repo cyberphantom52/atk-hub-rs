@@ -36,10 +36,11 @@ pub struct DownloadData {
 
 impl std::fmt::Display for DownloadData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "CID: {} | MID: {}", self.cid(), self.mid())
+        write!(f, "Connection Type: {:?}", self.connection_type())
     }
 }
 
+#[allow(dead_code)]
 impl DownloadData {
     pub fn encrypted_data(&self) -> &[u8; 4] {
         &self.encrypted_data
@@ -80,6 +81,7 @@ impl Command<DownloadData> {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Command, Default)]
 pub struct DriverStatus(u8);
 
@@ -198,7 +200,7 @@ impl GetMouseVersion {
 
 impl std::fmt::Display for GetMouseVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:02x}{:02x}", self.0, self.1)
+        write!(f, "{:02x}{:02x}", self.major(), self.minor())
     }
 }
 
