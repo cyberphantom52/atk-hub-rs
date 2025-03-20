@@ -23,10 +23,15 @@ impl From<u16> for Dpi {
     }
 }
 
-impl Dpi {
-    pub fn from_bytes(data: &[u8]) -> Result<Self, &'static str> {
+impl TryFrom<&[u8]> for Dpi {
+    type Error = Error;
+
+    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         if data.len() != 4 {
-            return Err("Invalid data length");
+            return Err(Error::ParseError(format!(
+                "DPI: Invalid data length: expected 4 got {}",
+                data.len()
+            )));
         }
 
         let checksum = 0xff
@@ -35,7 +40,7 @@ impl Dpi {
                 .wrapping_sub(data[1])
                 .wrapping_sub(data[2]);
         if checksum != data[3] {
-            return Err("Invalid checksum");
+            return Err(Error::ParseError("DPI: Invalid checksum".to_string()));
         }
 
         let x_dpi = data[0];
@@ -45,12 +50,10 @@ impl Dpi {
             (((u8::MAX as u16 + 1) * dpi_ex as u16 / 0x44) + (x_dpi as u16 + 1)) * DPI_STEP,
         ))
     }
+}
 
-    pub fn dpi(&self) -> u16 {
-        self.0
-    }
-
-    pub fn to_bytes(&self) -> [u8; 4] {
+impl Into<[u8; 4]> for Dpi {
+    fn into(self) -> [u8; 4] {
         let steps = (self.dpi() / DPI_STEP) - 1;
 
         let x_dpi = u8::MAX & steps as u8;
@@ -63,6 +66,16 @@ impl Dpi {
                 .wrapping_sub(dpi_ex);
 
         [x_dpi, y_dpi, dpi_ex, checksum]
+    }
+}
+
+impl Dpi {
+    pub fn new(dpi: u16) -> Self {
+        Dpi(dpi)
+    }
+
+    pub fn dpi(&self) -> u16 {
+        self.0
     }
 }
 
@@ -89,14 +102,12 @@ impl std::fmt::Display for Color {
     }
 }
 
-impl Color {
-    pub fn new(red: u8, green: u8, blue: u8) -> Self {
-        Color { red, green, blue }
-    }
+impl TryFrom<&[u8]> for Color {
+    type Error = Error;
 
-    pub fn from_bytes(data: &[u8]) -> Result<Self, &'static str> {
+    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         if data.len() != 4 {
-            return Err("Invalid data length, must be 4 bytes");
+            return Err(Error::ParseError("Color: Invalid data length".to_string()));
         }
 
         let checksum = 0xff
@@ -104,8 +115,9 @@ impl Color {
                 .wrapping_sub(data[0])
                 .wrapping_sub(data[1])
                 .wrapping_sub(data[2]);
+
         if checksum != data[3] {
-            return Err("Invalid checksum");
+            return Err(Error::ParseError("Color: Invalid checksum".to_string()));
         }
 
         Ok(Self {
@@ -114,17 +126,23 @@ impl Color {
             blue: data[2],
         })
     }
+}
 
-    pub fn to_bytes(&self) -> [u8; 4] {
-        [
-            self.red,
-            self.green,
-            self.blue,
-            0xff & 0x55u8
+impl Into<[u8; 4]> for Color {
+    fn into(self) -> [u8; 4] {
+        let checksum = 0xff
+            & 0x55u8
                 .wrapping_sub(self.red)
                 .wrapping_sub(self.green)
-                .wrapping_sub(self.blue),
-        ]
+                .wrapping_sub(self.blue);
+
+        [self.red, self.green, self.blue, checksum]
+    }
+}
+
+impl Color {
+    pub fn new(red: u8, green: u8, blue: u8) -> Self {
+        Color { red, green, blue }
     }
 }
 
@@ -287,8 +305,8 @@ impl Command<DpiPairSetting> {
         let data = self.data();
         let pair = DpiPair::try_from(self.eeprom_address())
             .expect("Failed to parse EEPROM address to DPI pair");
-        let dpi1 = Dpi::from_bytes(&data[0..4]).expect("Failed to parse DPI #1");
-        let dpi2 = Dpi::from_bytes(&data[4..8]).expect("Failed to parse DPI #2");
+        let dpi1 = Dpi::try_from(&data[0..4]).expect("Failed to parse DPI #1");
+        let dpi2 = Dpi::try_from(&data[4..8]).expect("Failed to parse DPI #2");
         DpiPairSetting {
             _pair: pair,
             dpi_first: dpi1,
@@ -297,13 +315,13 @@ impl Command<DpiPairSetting> {
     }
 
     pub fn set_dpi_first(&mut self, dpi: Dpi) {
-        let bytes = dpi.to_bytes();
+        let bytes: [u8; 4] = dpi.into();
         self.set_data(&bytes, 0)
             .expect("Failed to set first DPI value");
     }
 
     pub fn set_dpi_second(&mut self, dpi: Dpi) {
-        let bytes = dpi.to_bytes();
+        let bytes: [u8; 4] = dpi.into();
         self.set_data(&bytes, 4)
             .expect("Failed to set second DPI value");
     }
@@ -356,8 +374,8 @@ impl Command<ColorPairSetting> {
         let data = self.data();
         let pair = DpiPair::try_from(self.eeprom_address())
             .expect("Failed to parse EEPROM address to DPI pair");
-        let color1 = Color::from_bytes(&data[0..4]).expect("Failed to parse color #1");
-        let color2 = Color::from_bytes(&data[4..8]).expect("Failed to parse color #2");
+        let color1 = Color::try_from(&data[0..4]).expect("Failed to parse color #1");
+        let color2 = Color::try_from(&data[4..8]).expect("Failed to parse color #2");
         ColorPairSetting {
             _pair: pair,
             color_first: color1,
@@ -366,12 +384,12 @@ impl Command<ColorPairSetting> {
     }
 
     pub fn set_color_first(&mut self, color: Color) {
-        let bytes = color.to_bytes();
+        let bytes: [u8; 4] = color.into();
         self.set_data(&bytes, 0).expect("Failed to set first color");
     }
 
     pub fn set_color_second(&mut self, color: Color) {
-        let bytes = color.to_bytes();
+        let bytes: [u8; 4] = color.into();
         self.set_data(&bytes, 4)
             .expect("Failed to set second color");
     }
