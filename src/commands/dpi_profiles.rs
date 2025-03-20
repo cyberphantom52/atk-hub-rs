@@ -147,43 +147,19 @@ impl Color {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum DpiProfile {
-    Profile1,
-    Profile2,
-    Profile3,
-    Profile4,
-    Profile5,
-    Profile6,
-    Profile7,
-    Profile8,
-}
-
-impl TryFrom<u8> for DpiProfile {
-    type Error = &'static str;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(DpiProfile::Profile1),
-            1 => Ok(DpiProfile::Profile2),
-            2 => Ok(DpiProfile::Profile3),
-            3 => Ok(DpiProfile::Profile4),
-            4 => Ok(DpiProfile::Profile5),
-            5 => Ok(DpiProfile::Profile6),
-            6 => Ok(DpiProfile::Profile7),
-            7 => Ok(DpiProfile::Profile8),
-            _ => Err("Invalid DPI profile"),
-        }
-    }
-}
-
-impl From<DpiProfile> for DpiPair {
-    fn from(value: DpiProfile) -> Self {
-        DpiPair::try_from(value as u8).unwrap()
-    }
+pub enum Preset {
+    Preset1,
+    Preset2,
+    Preset3,
+    Preset4,
+    Preset5,
+    Preset6,
+    Preset7,
+    Preset8,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
-pub enum DpiPair {
+pub enum Pair {
     #[default]
     Pair1,
     Pair2,
@@ -191,49 +167,84 @@ pub enum DpiPair {
     Pair4,
 }
 
-impl TryFrom<u8> for DpiPair {
-    type Error = &'static str;
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        let pair = value / 2;
-        match pair {
-            0 => Ok(DpiPair::Pair1),
-            1 => Ok(DpiPair::Pair2),
-            2 => Ok(DpiPair::Pair3),
-            3 => Ok(DpiPair::Pair4),
-            _ => Err("Invalid DPI pair"),
+impl From<Preset> for Pair {
+    fn from(value: Preset) -> Self {
+        match value {
+            Preset::Preset1 | Preset::Preset2 => Pair::Pair1,
+            Preset::Preset3 | Preset::Preset4 => Pair::Pair2,
+            Preset::Preset5 | Preset::Preset6 => Pair::Pair3,
+            Preset::Preset7 | Preset::Preset8 => Pair::Pair4,
         }
     }
 }
 
-impl DpiPair {
+#[derive(Debug, Clone, Copy)]
+pub enum Slot {
+    First = 0x0,
+    Second = 0x4,
+}
+
+impl From<Preset> for Slot {
+    fn from(value: Preset) -> Self {
+        match value {
+            Preset::Preset1 | Preset::Preset3 => Slot::First,
+            Preset::Preset2 | Preset::Preset4 => Slot::Second,
+            Preset::Preset5 | Preset::Preset7 => Slot::First,
+            Preset::Preset6 | Preset::Preset8 => Slot::Second,
+        }
+    }
+}
+
+impl TryFrom<u8> for Preset {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Preset::Preset1),
+            1 => Ok(Preset::Preset2),
+            2 => Ok(Preset::Preset3),
+            3 => Ok(Preset::Preset4),
+            4 => Ok(Preset::Preset5),
+            5 => Ok(Preset::Preset6),
+            6 => Ok(Preset::Preset7),
+            7 => Ok(Preset::Preset8),
+            _ => Err(Error::ParseError(format!(
+                "Preset: Invalid DPI profile: {}",
+                value
+            ))),
+        }
+    }
+}
+
+impl Pair {
     pub fn dpi_eeprom_address(&self) -> EEPROMAddress {
         match self {
-            DpiPair::Pair1 => EEPROMAddress::DpiPair1,
-            DpiPair::Pair2 => EEPROMAddress::DpiPair3,
-            DpiPair::Pair3 => EEPROMAddress::DpiPair5,
-            DpiPair::Pair4 => EEPROMAddress::DpiPair7,
+            Pair::Pair1 => EEPROMAddress::DpiPair1,
+            Pair::Pair2 => EEPROMAddress::DpiPair3,
+            Pair::Pair3 => EEPROMAddress::DpiPair5,
+            Pair::Pair4 => EEPROMAddress::DpiPair7,
         }
     }
 
     pub fn color_eeprom_address(&self) -> EEPROMAddress {
         match self {
-            DpiPair::Pair1 => EEPROMAddress::DpiPair1Color,
-            DpiPair::Pair2 => EEPROMAddress::DpiPair3Color,
-            DpiPair::Pair3 => EEPROMAddress::DpiPair5Color,
-            DpiPair::Pair4 => EEPROMAddress::DpiPair7Color,
+            Pair::Pair1 => EEPROMAddress::DpiPair1Color,
+            Pair::Pair2 => EEPROMAddress::DpiPair3Color,
+            Pair::Pair3 => EEPROMAddress::DpiPair5Color,
+            Pair::Pair4 => EEPROMAddress::DpiPair7Color,
         }
     }
 }
 
-impl TryFrom<EEPROMAddress> for DpiPair {
+impl TryFrom<EEPROMAddress> for Pair {
     type Error = &'static str;
 
     fn try_from(value: EEPROMAddress) -> Result<Self, Self::Error> {
         match value {
-            EEPROMAddress::DpiPair1 | EEPROMAddress::DpiPair1Color => Ok(DpiPair::Pair1),
-            EEPROMAddress::DpiPair3 | EEPROMAddress::DpiPair3Color => Ok(DpiPair::Pair2),
-            EEPROMAddress::DpiPair5 | EEPROMAddress::DpiPair5Color => Ok(DpiPair::Pair3),
-            EEPROMAddress::DpiPair7 | EEPROMAddress::DpiPair7Color => Ok(DpiPair::Pair4),
+            EEPROMAddress::DpiPair1 | EEPROMAddress::DpiPair1Color => Ok(Pair::Pair1),
+            EEPROMAddress::DpiPair3 | EEPROMAddress::DpiPair3Color => Ok(Pair::Pair2),
+            EEPROMAddress::DpiPair5 | EEPROMAddress::DpiPair5Color => Ok(Pair::Pair3),
+            EEPROMAddress::DpiPair7 | EEPROMAddress::DpiPair7Color => Ok(Pair::Pair4),
             _ => Err("Invalid EEPROM address"),
         }
     }
@@ -259,31 +270,30 @@ impl std::fmt::Display for Gear {
 
 #[derive(Command, Debug, Default)]
 pub struct DpiPairSetting {
-    _pair: DpiPair,
+    _pair: Pair,
     dpi_first: Dpi,
     dpi_second: Dpi,
 }
 
 #[allow(dead_code)]
 impl DpiPairSetting {
-    pub fn dpi_first(&self) -> Dpi {
-        self.dpi_first
-    }
-
-    pub fn dpi_second(&self) -> Dpi {
-        self.dpi_second
+    pub fn dpi(&self, slot: Slot) -> Dpi {
+        match slot {
+            Slot::First => self.dpi_first,
+            Slot::Second => self.dpi_second,
+        }
     }
 
     pub fn builder(&self) -> CommandBuilder<DpiPairSetting> {
         Command::<DpiPairSetting>::builder(self._pair)
-            .dpi_first(self.dpi_first())
-            .dpi_second(self.dpi_second())
+            .dpi(self.dpi(Slot::First), Slot::First)
+            .dpi(self.dpi(Slot::Second), Slot::Second)
     }
 }
 
 #[command_extension]
 impl Command<DpiPairSetting> {
-    pub fn query(pair: DpiPair) -> Self {
+    pub fn query(pair: Pair) -> Self {
         let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(pair.dpi_eeprom_address());
@@ -292,7 +302,7 @@ impl Command<DpiPairSetting> {
         instance
     }
 
-    pub fn builder(pair: DpiPair) -> CommandBuilder<DpiPairSetting> {
+    pub fn builder(pair: Pair) -> CommandBuilder<DpiPairSetting> {
         let mut command = Command::default();
         command.set_id(CommandId::SetEEPROM);
         command.set_eeprom_address(pair.dpi_eeprom_address());
@@ -303,7 +313,7 @@ impl Command<DpiPairSetting> {
 
     pub fn config(self) -> DpiPairSetting {
         let data = self.data();
-        let pair = DpiPair::try_from(self.eeprom_address())
+        let pair = Pair::try_from(self.eeprom_address())
             .expect("Failed to parse EEPROM address to DPI pair");
         let dpi1 = Dpi::try_from(&data[0..4]).expect("Failed to parse DPI #1");
         let dpi2 = Dpi::try_from(&data[4..8]).expect("Failed to parse DPI #2");
@@ -314,46 +324,39 @@ impl Command<DpiPairSetting> {
         }
     }
 
-    pub fn set_dpi_first(&mut self, dpi: Dpi) {
+    pub fn set_dpi(&mut self, dpi: Dpi, slot: Slot) {
         let bytes: [u8; 4] = dpi.into();
-        self.set_data(&bytes, 0)
-            .expect("Failed to set first DPI value");
-    }
-
-    pub fn set_dpi_second(&mut self, dpi: Dpi) {
-        let bytes: [u8; 4] = dpi.into();
-        self.set_data(&bytes, 4)
-            .expect("Failed to set second DPI value");
+        self.set_data(&bytes, slot as usize)
+            .expect("Failed to set DPI value");
     }
 }
 
 #[derive(Command, Debug, Default)]
 pub struct ColorPairSetting {
-    _pair: DpiPair,
+    _pair: Pair,
     color_first: Color,
     color_second: Color,
 }
 
 #[allow(dead_code)]
 impl ColorPairSetting {
-    pub fn color_first(&self) -> Color {
-        self.color_first
-    }
-
-    pub fn color_second(&self) -> Color {
-        self.color_second
+    pub fn color(&self, slot: Slot) -> Color {
+        match slot {
+            Slot::First => self.color_first,
+            Slot::Second => self.color_second,
+        }
     }
 
     pub fn builder(&self) -> CommandBuilder<ColorPairSetting> {
         Command::<ColorPairSetting>::builder(self._pair)
-            .color_first(self.color_first())
-            .color_second(self.color_second())
+            .color(self.color(Slot::First), Slot::First)
+            .color(self.color(Slot::Second), Slot::Second)
     }
 }
 
 #[command_extension]
 impl Command<ColorPairSetting> {
-    pub fn query(pair: DpiPair) -> Self {
+    pub fn query(pair: Pair) -> Self {
         let mut instance = Command::default();
         instance.set_id(CommandId::GetEEPROM);
         instance.set_eeprom_address(pair.color_eeprom_address());
@@ -361,7 +364,7 @@ impl Command<ColorPairSetting> {
         instance
     }
 
-    pub fn builder(pair: DpiPair) -> CommandBuilder<ColorPairSetting> {
+    pub fn builder(pair: Pair) -> CommandBuilder<ColorPairSetting> {
         let mut command = Command::default();
         command.set_id(CommandId::SetEEPROM);
         command.set_eeprom_address(pair.color_eeprom_address());
@@ -372,7 +375,7 @@ impl Command<ColorPairSetting> {
 
     pub fn config(self) -> ColorPairSetting {
         let data = self.data();
-        let pair = DpiPair::try_from(self.eeprom_address())
+        let pair = Pair::try_from(self.eeprom_address())
             .expect("Failed to parse EEPROM address to DPI pair");
         let color1 = Color::try_from(&data[0..4]).expect("Failed to parse color #1");
         let color2 = Color::try_from(&data[4..8]).expect("Failed to parse color #2");
@@ -383,14 +386,9 @@ impl Command<ColorPairSetting> {
         }
     }
 
-    pub fn set_color_first(&mut self, color: Color) {
+    pub fn set_color(&mut self, color: Color, slot: Slot) {
         let bytes: [u8; 4] = color.into();
-        self.set_data(&bytes, 0).expect("Failed to set first color");
-    }
-
-    pub fn set_color_second(&mut self, color: Color) {
-        let bytes: [u8; 4] = color.into();
-        self.set_data(&bytes, 4)
-            .expect("Failed to set second color");
+        self.set_data(&bytes, slot as usize)
+            .expect("Failed to set color value");
     }
 }

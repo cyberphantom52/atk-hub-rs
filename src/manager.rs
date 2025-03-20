@@ -44,16 +44,16 @@ impl Profile {
         &self.silent_mode
     }
 
-    pub fn dpi_pair_setting(&self, pair: DpiPair) -> &DpiPairSetting {
+    pub fn dpi_pair_setting(&self, pair: Pair) -> &DpiPairSetting {
         &self.dpi[pair as usize]
     }
 
-    pub fn dpi_profile(&self, pair: DpiPair) -> (Gear, Gear) {
+    pub fn dpi_profile(&self, pair: Pair) -> (Gear, Gear) {
         let dpi = &self.dpi[pair as usize];
         let color = &self.dpi_color[pair as usize];
         (
-            Gear::new(dpi.dpi_first(), color.color_first()),
-            Gear::new(dpi.dpi_second(), color.color_second()),
+            Gear::new(dpi.dpi(Slot::First), color.color(Slot::First)),
+            Gear::new(dpi.dpi(Slot::Second), color.color(Slot::Second)),
         )
     }
 }
@@ -112,31 +112,31 @@ impl MouseManager {
 
         self.profile.borrow_mut().dpi = [
             self.device
-                .execute(Command::<DpiPairSetting>::query(DpiPair::Pair1))?
+                .execute(Command::<DpiPairSetting>::query(Pair::Pair1))?
                 .config(),
             self.device
-                .execute(Command::<DpiPairSetting>::query(DpiPair::Pair2))?
+                .execute(Command::<DpiPairSetting>::query(Pair::Pair2))?
                 .config(),
             self.device
-                .execute(Command::<DpiPairSetting>::query(DpiPair::Pair3))?
+                .execute(Command::<DpiPairSetting>::query(Pair::Pair3))?
                 .config(),
             self.device
-                .execute(Command::<DpiPairSetting>::query(DpiPair::Pair4))?
+                .execute(Command::<DpiPairSetting>::query(Pair::Pair4))?
                 .config(),
         ];
 
         self.profile.borrow_mut().dpi_color = [
             self.device
-                .execute(Command::<ColorPairSetting>::query(DpiPair::Pair1))?
+                .execute(Command::<ColorPairSetting>::query(Pair::Pair1))?
                 .config(),
             self.device
-                .execute(Command::<ColorPairSetting>::query(DpiPair::Pair2))?
+                .execute(Command::<ColorPairSetting>::query(Pair::Pair2))?
                 .config(),
             self.device
-                .execute(Command::<ColorPairSetting>::query(DpiPair::Pair3))?
+                .execute(Command::<ColorPairSetting>::query(Pair::Pair3))?
                 .config(),
             self.device
-                .execute(Command::<ColorPairSetting>::query(DpiPair::Pair4))?
+                .execute(Command::<ColorPairSetting>::query(Pair::Pair4))?
                 .config(),
         ];
 
@@ -309,21 +309,19 @@ impl MouseManager {
 
     pub fn set_dpi_profile_color(
         &self,
-        profile: DpiProfile,
+        preset: Preset,
         color: Color,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = DpiPair::try_from(profile)?;
-            let which = profile as usize % 2;
+            let pair = Pair::from(preset);
+            let slot = Slot::from(preset);
 
-            let mut builder = self.profile().dpi_color[pair as usize].builder();
-            builder = if which == 0 {
-                builder.color_first(color)
-            } else {
-                builder.color_second(color)
-            };
+            let response = self.profile().dpi_color[pair as usize]
+                .builder()
+                .color(color, slot)
+                .build()
+                .execute(&self.device)?;
 
-            let response = builder.build().execute(&self.device)?;
             self.profile.borrow_mut().dpi_color[pair as usize] = response.config();
 
             Ok(())
@@ -332,21 +330,21 @@ impl MouseManager {
 
     pub fn set_dpi_profile_dpi(
         &self,
-        profile: DpiProfile,
+        preset: Preset,
         dpi: Dpi,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = DpiPair::try_from(profile)?;
-            let which = profile as usize % 2;
+            let pair = Pair::from(preset);
+            let slot = Slot::from(preset);
 
-            let mut builder = self.profile().dpi[pair as usize].builder();
-            builder = if which == 0 {
-                builder.dpi_first(dpi)
-            } else {
-                builder.dpi_second(dpi)
-            };
+            let response = self
+                .profile()
+                .dpi_pair_setting(pair)
+                .builder()
+                .dpi(dpi, slot)
+                .build()
+                .execute(&self.device)?;
 
-            let response = builder.build().execute(&self.device)?;
             self.profile.borrow_mut().dpi[pair as usize] = response.config();
 
             Ok(())
@@ -374,7 +372,7 @@ impl MouseManager {
 
             self.profile.borrow_mut().mouse_info = response.config();
 
-            let profile = DpiProfile::try_from(num_profile)?;
+            let profile = Preset::try_from(num_profile + 1)?;
 
             self.set_dpi_profile_dpi(profile, dpi)?;
             self.set_dpi_profile_color(profile, color)?;
