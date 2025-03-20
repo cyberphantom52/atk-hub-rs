@@ -26,6 +26,23 @@ impl std::fmt::Display for MousePerfSettings {
 
 #[allow(dead_code)]
 impl MousePerfSettings {
+    pub fn set(
+        &self,
+        stabilization_time: Option<Duration<Milliseconds>>,
+        motion_sync: Option<bool>,
+        close_led_time: Option<Duration<Decaseconds>>,
+        linear_correction: Option<bool>,
+        ripple_control: Option<bool>,
+    ) -> Self {
+        MousePerfSettings {
+            stabilization_time: stabilization_time.unwrap_or(self.stabilization_time),
+            motion_sync: motion_sync.unwrap_or(self.motion_sync),
+            close_led_time: close_led_time.unwrap_or(self.close_led_time),
+            linear_correction: linear_correction.unwrap_or(self.linear_correction),
+            ripple_control: ripple_control.unwrap_or(self.ripple_control),
+        }
+    }
+
     pub fn stabilization_time(&self) -> Duration<Milliseconds> {
         self.stabilization_time
     }
@@ -142,6 +159,23 @@ impl std::fmt::Display for SensorPerfSettings {
 
 #[allow(dead_code)]
 impl SensorPerfSettings {
+    pub fn set(
+        &self,
+        move_close_led: Option<bool>,
+        sensor_sleep: Option<bool>,
+        sensor_sleep_time: Option<Duration<Decaseconds>>,
+        performance_mode: Option<bool>,
+        rf_tx_time: Option<Duration<Milliseconds>>,
+    ) -> Self {
+        SensorPerfSettings {
+            move_close_led: move_close_led.unwrap_or(self.move_close_led),
+            sensor_sleep: sensor_sleep.unwrap_or(self.sensor_sleep),
+            sensor_sleep_time: sensor_sleep_time.unwrap_or(self.sensor_sleep_time),
+            performance_mode: performance_mode.unwrap_or(self.performance_mode),
+            rf_tx_time: rf_tx_time.unwrap_or(self.rf_tx_time),
+        }
+    }
+
     pub fn move_close_led(&self) -> bool {
         self.move_close_led
     }

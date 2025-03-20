@@ -192,87 +192,6 @@ impl MouseManager {
         })
     }
 
-    pub fn set_stabilization_time(
-        &self,
-        time: Duration<Milliseconds>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .mouse_performance_settings()
-                .builder()
-                .stabilization_time(time)
-                .build();
-
-            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_motion_sync(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .mouse_performance_settings()
-                .builder()
-                .motion_sync(value)
-                .build();
-
-            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn close_led_time(
-        &self,
-        time: Duration<Decaseconds>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .mouse_performance_settings()
-                .builder()
-                .close_led_time(time)
-                .build();
-
-            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_angle_snapping(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .mouse_performance_settings()
-                .builder()
-                .linear_correction(value)
-                .build();
-
-            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_ripple_control(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .mouse_performance_settings()
-                .builder()
-                .ripple_control(value)
-                .build();
-
-            self.profile.borrow_mut().mouse_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
     pub fn set_mouse_performance_settings(
         &self,
         stabilization_time: Option<Duration<Milliseconds>>,
@@ -282,110 +201,21 @@ impl MouseManager {
         ripple_control: Option<bool>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let stabilization_time = stabilization_time.unwrap_or(
-                self.profile()
-                    .mouse_performance_settings()
-                    .stabilization_time(),
-            );
-            let motion_sync =
-                motion_sync.unwrap_or(self.profile().mouse_performance_settings().motion_sync());
-            let close_led_time = close_led_time.unwrap_or(
-                self.profile()
-                    .mouse_performance_settings()
-                    .close_led_time()
-                    .convert(),
-            );
-            let linear_correction = linear_correction.unwrap_or(
-                self.profile()
-                    .mouse_performance_settings()
-                    .linear_correction(),
-            );
-            let ripple_control = ripple_control
-                .unwrap_or(self.profile().mouse_performance_settings().ripple_control());
-
             let response = self
                 .profile()
                 .mouse_performance_settings()
+                .set(
+                    stabilization_time,
+                    motion_sync,
+                    close_led_time,
+                    linear_correction,
+                    ripple_control,
+                )
                 .builder()
-                .stabilization_time(stabilization_time)
-                .motion_sync(motion_sync)
-                .linear_correction(linear_correction)
-                .ripple_control(ripple_control)
-                .close_led_time(close_led_time)
                 .build()
                 .execute(&self.device)?;
 
             self.profile.borrow_mut().mouse_perf = response.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_dpi_led_enabled(&self, enabled: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let response = self
-                .profile()
-                .dpi_led_settings()
-                .builder()
-                .enabled(enabled)
-                .build()
-                .execute(&self.device)?;
-
-            self.profile.borrow_mut().dpi_led = response.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_dpi_led_mode(&self, mode: LedEffectMode) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let response = self
-                .profile()
-                .dpi_led_settings()
-                .builder()
-                .effect_mode(mode)
-                .build()
-                .execute(&self.device)?;
-
-            self.profile.borrow_mut().dpi_led = response.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_dpi_led_brightness(
-        &self,
-        brightness: LedBrightnessLevel,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let response = self
-                .profile()
-                .dpi_led_settings()
-                .builder()
-                .brightness_level(brightness)
-                .build()
-                .execute(&self.device)?;
-
-            self.profile.borrow_mut().dpi_led = response.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_dpi_led_breathing_rate(
-        &self,
-        rate: LedBreathingRate,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let response = self
-                .profile()
-                .dpi_led_settings()
-                .builder()
-                .breathing_rate(rate)
-                .build()
-                .execute(&self.device)?;
-
-            self.profile.borrow_mut().dpi_led = response.config();
 
             Ok(())
         })
@@ -399,19 +229,11 @@ impl MouseManager {
         rate: Option<LedBreathingRate>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let enabled = enabled.unwrap_or(self.profile().dpi_led_settings().enabled());
-            let mode = mode.unwrap_or(self.profile().dpi_led_settings().mode());
-            let brightness = brightness.unwrap_or(self.profile().dpi_led_settings().brightness());
-            let rate = rate.unwrap_or(self.profile().dpi_led_settings().breathing_rate());
-
             let response = self
                 .profile()
                 .dpi_led_settings()
+                .set(enabled, mode, brightness, rate)
                 .builder()
-                .enabled(enabled)
-                .effect_mode(mode)
-                .brightness_level(brightness)
-                .breathing_rate(rate)
                 .build()
                 .execute(&self.device)?;
 
@@ -456,78 +278,26 @@ impl MouseManager {
         })
     }
 
-    pub fn set_move_close_led(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .sensor_performance_settings()
-                .builder()
-                .move_close_led(value)
-                .build();
-
-            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_sensor_sleep(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .sensor_performance_settings()
-                .builder()
-                .sensor_sleep(value)
-                .build();
-
-            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
-    pub fn set_performance_mode(&self, value: bool) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let command = self
-                .profile()
-                .sensor_performance_settings()
-                .builder()
-                .performance_mode(value)
-                .build();
-
-            self.profile.borrow_mut().sensor_perf = self.device.execute(command)?.config();
-
-            Ok(())
-        })
-    }
-
     pub fn set_sensor_performance_settings(
         &self,
         move_close_led: Option<bool>,
         sensor_sleep: Option<bool>,
+        sensor_sleep_time: Option<Duration<Decaseconds>>,
         performance_mode: Option<bool>,
+        rf_tx_time: Option<Duration<Milliseconds>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let move_close_led = move_close_led.unwrap_or(
-                self.profile()
-                    .sensor_performance_settings()
-                    .move_close_led(),
-            );
-            let sensor_sleep =
-                sensor_sleep.unwrap_or(self.profile().sensor_performance_settings().sensor_sleep());
-            let performance_mode = performance_mode.unwrap_or(
-                self.profile()
-                    .sensor_performance_settings()
-                    .performance_mode(),
-            );
-
             let response = self
                 .profile()
                 .sensor_performance_settings()
+                .set(
+                    move_close_led,
+                    sensor_sleep,
+                    sensor_sleep_time,
+                    performance_mode,
+                    rf_tx_time,
+                )
                 .builder()
-                .move_close_led(move_close_led)
-                .sensor_sleep(sensor_sleep)
-                .performance_mode(performance_mode)
                 .build()
                 .execute(&self.device)?;
 

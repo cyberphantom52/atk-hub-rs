@@ -55,7 +55,7 @@ impl From<u8> for LedBrightnessLevel {
     }
 }
 
-#[derive(Command, Debug)]
+#[derive(Command, Debug, Clone)]
 pub struct DpiLedSettings {
     mode: LedEffectMode,
     brightness: LedBrightnessLevel,
@@ -88,6 +88,21 @@ impl Default for DpiLedSettings {
 }
 
 impl DpiLedSettings {
+    pub fn set(
+        &self,
+        enabled: Option<bool>,
+        mode: Option<LedEffectMode>,
+        brightness: Option<LedBrightnessLevel>,
+        breathing_rate: Option<LedBreathingRate>,
+    ) -> DpiLedSettings {
+        DpiLedSettings {
+            mode: mode.unwrap_or(self.mode),
+            brightness: brightness.unwrap_or(self.brightness),
+            breathing_rate: breathing_rate.unwrap_or(self.breathing_rate),
+            enabled: enabled.unwrap_or(self.enabled),
+        }
+    }
+
     pub fn mode(&self) -> LedEffectMode {
         self.mode
     }
