@@ -48,17 +48,18 @@ impl Profile {
         &self.dpi[pair as usize]
     }
 
-    pub fn dpi_color_setting(&self, pair: Pair) -> &ColorPairSetting {
+    pub fn color_pair_setting(&self, pair: Pair) -> &ColorPairSetting {
         &self.dpi_color[pair as usize]
     }
 
-    pub fn dpi_profile(&self, pair: Pair) -> (Gear, Gear) {
+    pub fn preset(&self, preset: Preset) -> Gear {
+        let pair = Pair::from(preset);
+        let slot = Slot::from(preset);
+
         let dpi = &self.dpi[pair as usize];
         let color = &self.dpi_color[pair as usize];
-        (
-            Gear::new(dpi.dpi(Slot::First), color.color(Slot::First)),
-            Gear::new(dpi.dpi(Slot::Second), color.color(Slot::Second)),
-        )
+
+        Gear::new(dpi.dpi(slot), color.color(slot))
     }
 }
 
@@ -332,7 +333,7 @@ impl MouseManager {
 
             let response = self
                 .profile()
-                .dpi_color_setting(pair)
+                .color_pair_setting(pair)
                 .builder()
                 .color(color, slot)
                 .build()
