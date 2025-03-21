@@ -2,7 +2,7 @@ use std::cell::{Ref, RefCell};
 
 use crate::{
     commands::prelude::*,
-    types::{Decaseconds, Duration, Milliseconds},
+    types::{Decaseconds, Duration, Milliseconds, Seconds},
 };
 use libatk_rs::prelude::*;
 
@@ -190,6 +190,16 @@ impl MouseManager {
 
             Ok(resp.config().connection_type())
         })
+    }
+
+    pub fn set_hibernation_time(
+        &self,
+        time: Duration<Seconds>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.set_mouse_performance_settings(None, None, Some(time.convert()), None, None)?;
+        self.set_sensor_performance_settings(None, None, Some(time.convert()), None, None)?;
+
+        Ok(())
     }
 
     pub fn set_mouse_performance_settings(
