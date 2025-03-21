@@ -71,7 +71,7 @@ pub struct MouseManager {
 impl MouseManager {
     pub fn new(device: Device) -> Result<Self, Box<dyn std::error::Error>> {
         let mut instance = Self {
-            profile: RefCell::new(Profile::default()),
+            profile: Default::default(),
             device,
         };
 
