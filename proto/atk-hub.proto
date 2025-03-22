@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package atk_hub;
+
+message Empty {}
+
+message BatteryStatusResponse {
+  int32 battery_level = 1;
+}
+
+service AtkHub {
+  rpc GetBatteryStatus(Empty) returns (BatteryStatusResponse);
+}

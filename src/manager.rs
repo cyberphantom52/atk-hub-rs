@@ -63,9 +63,24 @@ impl Profile {
     }
 }
 
+#[derive(Debug)]
 pub struct MouseManager {
     profile: RefCell<Profile>,
     device: Device,
+}
+
+impl Default for MouseManager {
+    fn default() -> Self {
+        // Hardcoding to R1 Pro for now
+        // TODO: Make this dynamic
+        let device = if let Ok(device) = Device::new(0x3554, 0xf58a, 0xff04, 0x2) {
+            device
+        } else {
+            Device::new(0x3554, 0xf58c, 0xff04, 0x2).unwrap()
+        };
+
+        MouseManager::new(device).unwrap()
+    }
 }
 
 #[allow(dead_code)]
