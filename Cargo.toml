@@ -4,4 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libatk-rs = "0.1.9"
+libatk-rs = "0.1.10"
+prost = "0.13.5"
+tokio = { version = "1.44.1", features = ["rt-multi-thread"] }
+tonic = "0.12.3"
+
+[build-dependencies]
+tonic-build = "0.12.3"
