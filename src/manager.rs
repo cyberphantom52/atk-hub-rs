@@ -2,6 +2,7 @@ use std::cell::{Ref, RefCell};
 
 use crate::{
     commands::prelude::*,
+    proto::{LedBreathingRate, LedBrightnessLevel, LedEffectMode},
     types::{Decaseconds, Duration, Milliseconds, Seconds},
 };
 use libatk_rs::prelude::*;

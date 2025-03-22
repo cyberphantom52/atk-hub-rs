@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+enum LedEffectMode {
+    LedEffectModeInvalid = 0;
+    LedEffectModeStatic = 1;
+    LedEffectModeBreathing = 2;
+}
+
+enum LedBreathingRate {
+    LedBreathingRateInvalid = 0;
+    LedBreathingRateSlow = 0x1;
+    LedBreathingRateMedium = 0x3;
+    LedBreathingRateFast = 0x5;
+}
+
+enum LedBrightnessLevel {
+    LedBrightnessLevelInvalid = 0;
+    LedBrightnessLevelLow = 0x10;
+    LedBrightnessLevelMedium = 0x80;
+    LedBrightnessLevelHigh = 0xff;
+}
+
+message LedEffectResponse {
+    LedEffectMode mode = 1;
+    LedBreathingRate rate = 2;
+    LedBrightnessLevel brightness = 3;
+    bool enabled = 4;
+}
+
+message LedEffectRequest {
+    optional LedEffectMode mode = 1;
+    optional LedBreathingRate rate = 2;
+    optional LedBrightnessLevel brightness = 3;
+    optional bool enable = 4;
+}

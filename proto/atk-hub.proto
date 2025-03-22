@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package atk_hub;
 
+import "dpi_led.proto";
+
 message Empty {}
 
 message BatteryStatusResponse {
@@ -10,4 +12,6 @@ message BatteryStatusResponse {
 
 service AtkHub {
   rpc GetBatteryStatus(Empty) returns (BatteryStatusResponse);
+  rpc GetLedEffect(Empty) returns (LedEffectResponse);
+  rpc SetLedEffect(LedEffectRequest) returns (LedEffectResponse);
 }
