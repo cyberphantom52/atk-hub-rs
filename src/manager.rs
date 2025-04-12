@@ -106,7 +106,7 @@ impl MouseManager {
         Ok(result)
     }
 
-    fn load_profile(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    fn load_profile(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.wait_for_mouse_online()?;
 
         /* TODO: Keys */
@@ -219,6 +219,17 @@ impl MouseManager {
 
             Ok(resp.config().connection_type())
         })
+    }
+
+    pub fn factory_reset(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            Command::<FactoryReset>::query().execute(&self.device)?;
+            Ok(())
+        })?;
+
+        self.load_profile()?;
+
+        Ok(())
     }
 
     pub fn set_hibernation_time(
