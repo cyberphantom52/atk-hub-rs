@@ -293,6 +293,22 @@ impl MouseManager {
         })
     }
 
+    pub fn set_poll_rate(&self, rate: PollingRate) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .poll_rate(rate)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
+
+            Ok(())
+        })
+    }
+
     pub fn set_far_distance_mode(&self, mode: bool) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
             let response = self
