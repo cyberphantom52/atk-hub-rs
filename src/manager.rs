@@ -205,6 +205,14 @@ impl MouseManager {
         })
     }
 
+    pub fn mouse_version(&self) -> Result<GetMouseVersion, Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let resp = Command::<GetMouseVersion>::query().execute(&self.device)?;
+
+            Ok(resp.config())
+        })
+    }
+
     pub fn connection_type(&self) -> Result<ConnectionType, Box<dyn std::error::Error>> {
         self.wrapper(|_| {
             let resp = Command::<DownloadData>::query().execute(&self.device)?;
