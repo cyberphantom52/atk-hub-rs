@@ -87,7 +87,7 @@ impl Default for MouseManager {
 #[allow(dead_code)]
 impl MouseManager {
     pub fn new(device: Device) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut instance = Self {
+        let instance = Self {
             profile: Default::default(),
             device,
         };
