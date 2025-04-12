@@ -424,12 +424,12 @@ impl MouseManager {
         dpi: Dpi,
         color: Color,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let num_profile = self.profile().mouse_info().num_profile();
-            if num_profile >= 8 {
-                return Err("Maximum number of profiles reached".into());
-            }
+        let num_profile = self.profile().mouse_info().num_profile();
+        if num_profile >= 8 {
+            return Err("Maximum number of profiles reached".into());
+        }
 
+        self.wrapper(|_| {
             let response = self
                 .profile()
                 .mouse_info()
@@ -438,12 +438,44 @@ impl MouseManager {
                 .build()
                 .execute(&self.device)?;
 
-            self.profile.borrow_mut().mouse_info = response.config();
-
             let profile = Preset::try_from(num_profile + 1)?;
 
             self.set_dpi_profile_dpi(profile, dpi)?;
             self.set_dpi_profile_color(profile, color)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn delete_dpi_profile(&self, preset: Preset) -> Result<(), Box<dyn std::error::Error>> {
+        let num_profile = self.profile().mouse_info().num_profile();
+        if num_profile <= 1 {
+            return Err("Cannot delete the last profile".into());
+        }
+
+        self.wrapper(|_| {
+            if num_profile != preset as u8 {
+                for i in (preset as u8 + 1)..=num_profile {
+                    let src_preset = Preset::try_from(i)?;
+                    let gear = self.profile().preset(src_preset);
+
+                    let dst_preset = Preset::try_from(i - 1)?;
+                    self.set_dpi_profile_dpi(dst_preset, gear.dpi())?;
+                    self.set_dpi_profile_color(dst_preset, gear.color())?;
+                }
+            }
+
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .num_profile(num_profile - 1)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
 
             Ok(())
         })

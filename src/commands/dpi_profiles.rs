@@ -56,14 +56,14 @@ impl TryFrom<u8> for Preset {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Preset::Preset1),
-            1 => Ok(Preset::Preset2),
-            2 => Ok(Preset::Preset3),
-            3 => Ok(Preset::Preset4),
-            4 => Ok(Preset::Preset5),
-            5 => Ok(Preset::Preset6),
-            6 => Ok(Preset::Preset7),
-            7 => Ok(Preset::Preset8),
+            1 => Ok(Preset::Preset1),
+            2 => Ok(Preset::Preset2),
+            3 => Ok(Preset::Preset3),
+            4 => Ok(Preset::Preset4),
+            5 => Ok(Preset::Preset5),
+            6 => Ok(Preset::Preset6),
+            7 => Ok(Preset::Preset7),
+            8 => Ok(Preset::Preset8),
             _ => Err(Error::ParseError(format!(
                 "Preset: Invalid DPI profile: {}",
                 value
@@ -115,6 +115,14 @@ pub struct Gear {
 impl Gear {
     pub fn new(dpi: Dpi, color: Color) -> Self {
         Gear { dpi, color }
+    }
+
+    pub fn dpi(&self) -> Dpi {
+        self.dpi
+    }
+
+    pub fn color(&self) -> Color {
+        self.color
     }
 }
 
