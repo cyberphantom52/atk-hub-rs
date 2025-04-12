@@ -105,15 +105,7 @@ impl AtkHub for AtkHubService {
                 Status::internal(format!("Failed to set led effect: {}", e.to_string()))
             })?;
 
-        let settings = self
-            .manager
-            .lock()
-            .await
-            .profile()
-            .dpi_led_settings()
-            .clone();
-
-        Ok(Response::new(settings.into()))
+        self.get_led_effect(Request::new(Empty {})).await
     }
 
     async fn get_mouse_version(
@@ -153,9 +145,7 @@ impl AtkHub for AtkHubService {
             .set_poll_rate(poll_rate)
             .map_err(|e| Status::internal(format!("Failed to set poll rate: {}", e.to_string())))?;
 
-        let resp = self.manager.lock().await.profile().mouse_info().poll_rate();
-
-        Ok(Response::new(proto::PollRateResponse { rate: resp as _ }))
+        self.get_poll_rate(Request::new(Empty {})).await
     }
 
     async fn get_poll_rate(
