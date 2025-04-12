@@ -1,5 +1,7 @@
 use libatk_rs::prelude::*;
 
+use crate::proto;
+
 #[derive(Default, Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum PollingRate {
@@ -11,6 +13,23 @@ pub enum PollingRate {
     Hz2000 = 0x10,
     Hz4000 = 0x20,
     Hz8000 = 0x40,
+}
+
+impl TryFrom<proto::PollingRate> for PollingRate {
+    type Error = Error;
+
+    fn try_from(value: proto::PollingRate) -> Result<Self, Self::Error> {
+        match value {
+            proto::PollingRate::Hz1000 => Ok(PollingRate::Hz1000),
+            proto::PollingRate::Hz500 => Ok(PollingRate::Hz500),
+            proto::PollingRate::Hz250 => Ok(PollingRate::Hz250),
+            proto::PollingRate::Hz125 => Ok(PollingRate::Hz125),
+            proto::PollingRate::Hz2000 => Ok(PollingRate::Hz2000),
+            proto::PollingRate::Hz4000 => Ok(PollingRate::Hz4000),
+            proto::PollingRate::Hz8000 => Ok(PollingRate::Hz8000),
+            _ => Err(Error::ParseError("Invalid Polling Rate".to_string())),
+        }
+    }
 }
 
 impl std::fmt::Display for PollingRate {

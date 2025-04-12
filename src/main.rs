@@ -140,15 +140,33 @@ impl AtkHub for AtkHubService {
 
     async fn set_poll_rate(
         &self,
-        request: tonic::Request<proto::PollRateRequest>,
-    ) -> std::result::Result<tonic::Response<proto::PollRateResponse>, tonic::Status> {
-        todo!()
+        request: Request<proto::PollRateRequest>,
+    ) -> Result<Response<proto::PollRateResponse>, Status> {
+        let input = request.get_ref();
+        let poll_rate = input.rate().try_into().map_err(|_| {
+            tonic::Status::internal("Failed to parse poll rate: Must be 125Hz, 250Hz, 500Hz, 1000Hz, 2000Hz, 4000Hz or 8000Hz")
+        })?;
+
+        self.manager
+            .lock()
+            .await
+            .set_poll_rate(poll_rate)
+            .map_err(|e| {
+                tonic::Status::internal(format!("Failed to set poll rate: {}", e.to_string()))
+            })?;
+
+        let resp = self.manager.lock().await.profile().mouse_info().poll_rate();
+
+        Ok(Response::new(proto::PollRateResponse { rate: resp as _ }))
     }
+
     async fn get_poll_rate(
         &self,
         request: tonic::Request<proto::Empty>,
     ) -> std::result::Result<tonic::Response<proto::PollRateResponse>, tonic::Status> {
-        todo!()
+        let resp = self.manager.lock().await.profile().mouse_info().poll_rate();
+
+        Ok(Response::new(proto::PollRateResponse { rate: resp as _ }))
     }
 
     // Performance settings
