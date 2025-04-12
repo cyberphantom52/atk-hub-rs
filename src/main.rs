@@ -268,13 +268,37 @@ impl AtkHub for AtkHubService {
         &self,
         _: Request<Empty>,
     ) -> Result<Response<proto::SilentHeightResponse>, Status> {
-        todo!()
+        let resp = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .silent_height()
+            .silent_height();
+
+        Ok(Response::new(proto::SilentHeightResponse {
+            mode: resp as _,
+        }))
     }
+
     async fn set_silent_height(
         &self,
         request: Request<proto::SilentHeightRequest>,
     ) -> Result<Response<proto::SilentHeightResponse>, Status> {
-        todo!()
+        let input = request.get_ref();
+        let mode = input.mode().try_into().map_err(|_| {
+            Status::internal("Failed to parse silent height: Must be Off, Low, Medium or High")
+        })?;
+
+        self.manager
+            .lock()
+            .await
+            .set_silent_height(mode)
+            .map_err(|e| {
+                Status::internal(format!("Failed to set silent height: {}", e.to_string()))
+            })?;
+
+        self.get_silent_height(Request::new(Empty {})).await
     }
 }
 
