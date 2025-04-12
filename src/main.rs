@@ -240,13 +240,37 @@ impl AtkHub for AtkHubService {
         &self,
         _: Request<Empty>,
     ) -> Result<Response<proto::FarDistanceModeResponse>, Status> {
-        todo!()
+        let resp = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .far_distance_mode()
+            .far_distance_mode();
+
+        Ok(Response::new(proto::FarDistanceModeResponse {
+            enabled: resp,
+        }))
     }
+
     async fn set_far_distance_mode(
         &self,
         request: Request<proto::FarDistanceModeRequest>,
     ) -> Result<Response<proto::FarDistanceModeResponse>, Status> {
-        todo!()
+        let input = request.get_ref();
+
+        self.manager
+            .lock()
+            .await
+            .set_far_distance_mode(input.enabled)
+            .map_err(|e| {
+                Status::internal(format!(
+                    "Failed to set far distance mode: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        self.get_far_distance_mode(Request::new(Empty {})).await
     }
 
     // Silent height
