@@ -6,6 +6,9 @@ pub mod proto {
     tonic::include_proto!("atk_hub");
 }
 
+use proto::Empty;
+use tonic::{Request, Response, Status};
+
 fn parse_field<U, T, E>(
     field: Option<U>,
     converter: impl Fn(u8) -> Result<T, E>,
@@ -115,16 +118,26 @@ impl AtkHub for AtkHubService {
 
     async fn get_mouse_version(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::MouseVersionResponse>, tonic::Status> {
-        todo!()
+        _: Request<Empty>,
+    ) -> Result<Response<proto::MouseVersionResponse>, Status> {
+        let version = self.manager.lock().await.mouse_version().map_err(|e| {
+            tonic::Status::internal(format!("Failed to get mouse version: {}", e.to_string()))
+        })?;
+
+        Ok(Response::new(version.into()))
     }
+
     async fn get_connection_type(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::ConnectionTypeResponse>, tonic::Status> {
-        todo!()
+        _: Request<Empty>,
+    ) -> Result<Response<proto::ConnectionTypeResponse>, Status> {
+        let conn_ty = self.manager.lock().await.connection_type().map_err(|e| {
+            tonic::Status::internal(format!("Failed to get connection type: {}", e.to_string()))
+        })?;
+
+        Ok(Response::new(conn_ty.into()))
     }
+
     async fn set_poll_rate(
         &self,
         request: tonic::Request<proto::PollRateRequest>,

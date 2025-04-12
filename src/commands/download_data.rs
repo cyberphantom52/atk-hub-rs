@@ -1,5 +1,7 @@
 use libatk_rs::prelude::*;
 
+use crate::proto;
+
 #[derive(Debug, Clone, Copy, Default)]
 #[repr(u8)]
 pub enum ConnectionType {
@@ -10,6 +12,12 @@ pub enum ConnectionType {
     Wired8K,
     Dongle2K,
     Dongle8K,
+}
+
+impl Into<proto::ConnectionTypeResponse> for ConnectionType {
+    fn into(self) -> proto::ConnectionTypeResponse {
+        proto::ConnectionTypeResponse { r#type: self as _ }
+    }
 }
 
 impl From<u8> for ConnectionType {
@@ -187,6 +195,15 @@ impl Command<GetMouseCidMid> {
 
 #[derive(Command, Default, Debug)]
 pub struct GetMouseVersion(u8, u8);
+
+impl Into<proto::MouseVersionResponse> for GetMouseVersion {
+    fn into(self) -> proto::MouseVersionResponse {
+        proto::MouseVersionResponse {
+            major: self.major() as _,
+            minor: self.minor() as _,
+        }
+    }
+}
 
 impl GetMouseVersion {
     pub fn major(&self) -> u8 {
