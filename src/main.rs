@@ -13,7 +13,7 @@ fn parse_field<U, T, E>(
     field: Option<U>,
     converter: impl Fn(u8) -> Result<T, E>,
     err_msg: &'static str,
-) -> Result<Option<T>, tonic::Status>
+) -> Result<Option<T>, Status>
 where
     U: TryInto<u8>,
 {
@@ -21,7 +21,7 @@ where
         .and_then(|n| n.try_into().ok())
         .map(converter)
         .transpose()
-        .map_err(|_| tonic::Status::internal(err_msg))
+        .map_err(|_| Status::internal(err_msg))
 }
 
 use manager::MouseManager;
@@ -41,27 +41,27 @@ pub struct AtkHubService {
 impl AtkHub for AtkHubService {
     async fn get_battery_status(
         &self,
-        _: tonic::Request<proto::Empty>,
-    ) -> Result<tonic::Response<proto::BatteryStatusResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::BatteryStatusResponse>, Status> {
         let level = self
             .manager
             .lock()
             .await
             .battery_level()
             .map_err(|e| {
-                tonic::Status::internal(format!("Failed to get battery level: {}", e.to_string()))
+                Status::internal(format!("Failed to get battery level: {}", e.to_string()))
             })?
             .level();
 
-        Ok(tonic::Response::new(proto::BatteryStatusResponse {
+        Ok(Response::new(proto::BatteryStatusResponse {
             battery_level: level as _,
         }))
     }
 
     async fn get_led_effect(
         &self,
-        _: tonic::Request<proto::Empty>,
-    ) -> Result<tonic::Response<proto::LedEffectResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::LedEffectResponse>, Status> {
         let settings = self
             .manager
             .lock()
@@ -70,13 +70,13 @@ impl AtkHub for AtkHubService {
             .dpi_led_settings()
             .clone();
 
-        Ok(tonic::Response::new(settings.into()))
+        Ok(Response::new(settings.into()))
     }
 
     async fn set_led_effect(
         &self,
-        request: tonic::Request<proto::LedEffectRequest>,
-    ) -> Result<tonic::Response<proto::LedEffectResponse>, tonic::Status> {
+        request: Request<proto::LedEffectRequest>,
+    ) -> Result<Response<proto::LedEffectResponse>, Status> {
         let input = request.get_ref();
 
         let mode = parse_field(
@@ -102,7 +102,7 @@ impl AtkHub for AtkHubService {
             .await
             .set_dpi_led_settings(input.enable, mode, brightness, rate)
             .map_err(|e| {
-                tonic::Status::internal(format!("Failed to set led effect: {}", e.to_string()))
+                Status::internal(format!("Failed to set led effect: {}", e.to_string()))
             })?;
 
         let settings = self
@@ -113,7 +113,7 @@ impl AtkHub for AtkHubService {
             .dpi_led_settings()
             .clone();
 
-        Ok(tonic::Response::new(settings.into()))
+        Ok(Response::new(settings.into()))
     }
 
     async fn get_mouse_version(
@@ -121,7 +121,7 @@ impl AtkHub for AtkHubService {
         _: Request<Empty>,
     ) -> Result<Response<proto::MouseVersionResponse>, Status> {
         let version = self.manager.lock().await.mouse_version().map_err(|e| {
-            tonic::Status::internal(format!("Failed to get mouse version: {}", e.to_string()))
+            Status::internal(format!("Failed to get mouse version: {}", e.to_string()))
         })?;
 
         Ok(Response::new(version.into()))
@@ -132,7 +132,7 @@ impl AtkHub for AtkHubService {
         _: Request<Empty>,
     ) -> Result<Response<proto::ConnectionTypeResponse>, Status> {
         let conn_ty = self.manager.lock().await.connection_type().map_err(|e| {
-            tonic::Status::internal(format!("Failed to get connection type: {}", e.to_string()))
+            Status::internal(format!("Failed to get connection type: {}", e.to_string()))
         })?;
 
         Ok(Response::new(conn_ty.into()))
@@ -144,16 +144,14 @@ impl AtkHub for AtkHubService {
     ) -> Result<Response<proto::PollRateResponse>, Status> {
         let input = request.get_ref();
         let poll_rate = input.rate().try_into().map_err(|_| {
-            tonic::Status::internal("Failed to parse poll rate: Must be 125Hz, 250Hz, 500Hz, 1000Hz, 2000Hz, 4000Hz or 8000Hz")
+            Status::internal("Failed to parse poll rate: Must be 125Hz, 250Hz, 500Hz, 1000Hz, 2000Hz, 4000Hz or 8000Hz")
         })?;
 
         self.manager
             .lock()
             .await
             .set_poll_rate(poll_rate)
-            .map_err(|e| {
-                tonic::Status::internal(format!("Failed to set poll rate: {}", e.to_string()))
-            })?;
+            .map_err(|e| Status::internal(format!("Failed to set poll rate: {}", e.to_string())))?;
 
         let resp = self.manager.lock().await.profile().mouse_info().poll_rate();
 
@@ -162,8 +160,8 @@ impl AtkHub for AtkHubService {
 
     async fn get_poll_rate(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::PollRateResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::PollRateResponse>, Status> {
         let resp = self.manager.lock().await.profile().mouse_info().poll_rate();
 
         Ok(Response::new(proto::PollRateResponse { rate: resp as _ }))
@@ -172,95 +170,94 @@ impl AtkHub for AtkHubService {
     // Performance settings
     async fn get_mouse_performance(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::MousePerformanceResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::MousePerformanceResponse>, Status> {
         todo!()
     }
     async fn set_mouse_performance(
         &self,
-        request: tonic::Request<proto::MousePerformanceRequest>,
-    ) -> std::result::Result<tonic::Response<proto::MousePerformanceResponse>, tonic::Status> {
+        request: Request<proto::MousePerformanceRequest>,
+    ) -> Result<Response<proto::MousePerformanceResponse>, Status> {
         todo!()
     }
     async fn get_sensor_performance(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::SensorPerformanceResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::SensorPerformanceResponse>, Status> {
         todo!()
     }
     async fn set_sensor_performance(
         &self,
-        request: tonic::Request<proto::SensorPerformanceRequest>,
-    ) -> std::result::Result<tonic::Response<proto::SensorPerformanceResponse>, tonic::Status> {
+        request: Request<proto::SensorPerformanceRequest>,
+    ) -> Result<Response<proto::SensorPerformanceResponse>, Status> {
         todo!()
     }
 
     // Profile management
     async fn get_dpi_profiles(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::GetDpiProfilesResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::GetDpiProfilesResponse>, Status> {
         todo!()
     }
     async fn set_dpi_profile(
         &self,
-        request: tonic::Request<proto::SetDpiProfileRequest>,
-    ) -> std::result::Result<tonic::Response<proto::SetDpiProfileResponse>, tonic::Status> {
+        request: Request<proto::SetDpiProfileRequest>,
+    ) -> Result<Response<proto::SetDpiProfileResponse>, Status> {
         todo!()
     }
     async fn set_dpi_profile_color(
         &self,
-        request: tonic::Request<proto::SetDpiProfileColorRequest>,
-    ) -> std::result::Result<tonic::Response<proto::SetDpiProfileColorResponse>, tonic::Status>
-    {
+        request: Request<proto::SetDpiProfileColorRequest>,
+    ) -> Result<Response<proto::SetDpiProfileColorResponse>, Status> {
         todo!()
     }
     async fn new_dpi_profile(
         &self,
-        request: tonic::Request<proto::NewDpiProfileRequest>,
-    ) -> std::result::Result<tonic::Response<proto::NewDpiProfileResponse>, tonic::Status> {
+        request: Request<proto::NewDpiProfileRequest>,
+    ) -> Result<Response<proto::NewDpiProfileResponse>, Status> {
         todo!()
     }
     async fn delete_dpi_profile(
         &self,
-        request: tonic::Request<proto::DeleteDpiProfileRequest>,
-    ) -> std::result::Result<tonic::Response<proto::DeleteDpiProfileResponse>, tonic::Status> {
+        request: Request<proto::DeleteDpiProfileRequest>,
+    ) -> Result<Response<proto::DeleteDpiProfileResponse>, Status> {
         todo!()
     }
 
     // Factory reset
     async fn factory_reset(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::FactoryResetResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::FactoryResetResponse>, Status> {
         todo!()
     }
 
     // Far distance mode
     async fn get_far_distance_mode(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::FarDistanceModeResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::FarDistanceModeResponse>, Status> {
         todo!()
     }
     async fn set_far_distance_mode(
         &self,
-        request: tonic::Request<proto::FarDistanceModeRequest>,
-    ) -> std::result::Result<tonic::Response<proto::FarDistanceModeResponse>, tonic::Status> {
+        request: Request<proto::FarDistanceModeRequest>,
+    ) -> Result<Response<proto::FarDistanceModeResponse>, Status> {
         todo!()
     }
 
     // Silent height
     async fn get_silent_height(
         &self,
-        request: tonic::Request<proto::Empty>,
-    ) -> std::result::Result<tonic::Response<proto::SilentHeightResponse>, tonic::Status> {
+        _: Request<Empty>,
+    ) -> Result<Response<proto::SilentHeightResponse>, Status> {
         todo!()
     }
     async fn set_silent_height(
         &self,
-        request: tonic::Request<proto::SilentHeightRequest>,
-    ) -> std::result::Result<tonic::Response<proto::SilentHeightResponse>, tonic::Status> {
+        request: Request<proto::SilentHeightRequest>,
+    ) -> Result<Response<proto::SilentHeightResponse>, Status> {
         todo!()
     }
 }
