@@ -3,7 +3,7 @@ use std::cell::{Ref, RefCell};
 use crate::{
     commands::prelude::*,
     proto::{LedBreathingRate, LedBrightnessLevel, LedEffectMode},
-    types::{Decaseconds, Duration, Milliseconds, Seconds},
+    types::{Color, Decaseconds, Dpi, Duration, Milliseconds, Seconds},
 };
 use libatk_rs::prelude::*;
 
