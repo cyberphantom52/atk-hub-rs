@@ -4,6 +4,8 @@ mod types;
 
 pub mod proto {
     tonic::include_proto!("atk_hub");
+
+    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("atk_hub");
 }
 
 use proto::Empty;
@@ -398,7 +400,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let atk_hub = AtkHubService::default();
 
+    let service = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET)
+        .build_v1()?;
+
     Server::builder()
+        .add_service(service)
         .add_service(AtkHubServer::new(atk_hub))
         .serve(addr)
         .await?;
