@@ -1,4 +1,7 @@
-use crate::types::{Decaseconds, Duration, Milliseconds, Seconds};
+use crate::{
+    proto,
+    types::{Decaseconds, Duration, Milliseconds, Seconds},
+};
 use libatk_rs::prelude::*;
 
 #[derive(Command, Default, Debug)]
@@ -8,6 +11,26 @@ pub struct MousePerfSettings {
     close_led_time: Duration<Decaseconds>,
     linear_correction: bool,
     ripple_control: bool,
+}
+
+impl Into<proto::MousePerformanceResponse> for &MousePerfSettings {
+    fn into(self) -> proto::MousePerformanceResponse {
+        let &MousePerfSettings {
+            motion_sync,
+            linear_correction,
+            close_led_time,
+            ripple_control,
+            stabilization_time,
+        } = self;
+
+        proto::MousePerformanceResponse {
+            motion_sync,
+            stabilization_time_ms: stabilization_time.as_unit() as i32,
+            close_led_time_sec: close_led_time.convert::<Seconds>().as_unit() as i32,
+            linear_correction,
+            ripple_control,
+        }
+    }
 }
 
 impl std::fmt::Display for MousePerfSettings {
@@ -141,6 +164,26 @@ pub struct SensorPerfSettings {
     sensor_sleep_time: Duration<Decaseconds>,
     performance_mode: bool,
     rf_tx_time: Duration<Milliseconds>,
+}
+
+impl Into<proto::SensorPerformanceResponse> for &SensorPerfSettings {
+    fn into(self) -> proto::SensorPerformanceResponse {
+        let &SensorPerfSettings {
+            move_close_led,
+            performance_mode,
+            rf_tx_time,
+            sensor_sleep,
+            sensor_sleep_time,
+        } = self;
+
+        proto::SensorPerformanceResponse {
+            move_close_led,
+            sensor_sleep,
+            sensor_sleep_time_sec: sensor_sleep_time.convert::<Seconds>().as_unit() as i32,
+            performance_mode,
+            rf_tx_time_ms: rf_tx_time.as_unit() as i32,
+        }
+    }
 }
 
 impl std::fmt::Display for SensorPerfSettings {

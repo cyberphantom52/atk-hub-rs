@@ -31,6 +31,7 @@ use proto::{
 };
 use tokio::sync::Mutex;
 use tonic::transport::Server;
+use types::{Duration, Milliseconds, Seconds};
 
 #[derive(Debug, Default)]
 pub struct AtkHubService {
@@ -162,25 +163,114 @@ impl AtkHub for AtkHubService {
         &self,
         _: Request<Empty>,
     ) -> Result<Response<proto::MousePerformanceResponse>, Status> {
-        todo!()
+        let settings = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .mouse_performance_settings()
+            .into();
+
+        Ok(Response::new(settings))
     }
-    async fn set_mouse_performance(
-        &self,
-        request: Request<proto::MousePerformanceRequest>,
-    ) -> Result<Response<proto::MousePerformanceResponse>, Status> {
-        todo!()
-    }
+
     async fn get_sensor_performance(
         &self,
         _: Request<Empty>,
     ) -> Result<Response<proto::SensorPerformanceResponse>, Status> {
-        todo!()
+        let settings = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .sensor_performance_settings()
+            .into();
+
+        Ok(Response::new(settings))
     }
+
+    async fn set_mouse_performance(
+        &self,
+        request: Request<proto::MousePerformanceRequest>,
+    ) -> Result<Response<proto::MousePerformanceResponse>, Status> {
+        let input = request.get_ref();
+
+        let stabilization_time = input
+            .stabilization_time_ms
+            .map(|time| Duration::<Milliseconds>::new(time as u32));
+
+        let close_led_time = input
+            .close_led_time_sec
+            .map(|time| Duration::<Seconds>::new(time as u32).convert());
+
+        self.manager
+            .lock()
+            .await
+            .set_mouse_performance_settings(
+                stabilization_time,
+                input.motion_sync,
+                close_led_time,
+                input.linear_correction,
+                input.ripple_control,
+            )
+            .map_err(|e| {
+                Status::internal(format!(
+                    "Failed to set mouse performance settings: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        let resp = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .mouse_performance_settings()
+            .into();
+
+        Ok(Response::new(resp))
+    }
+
     async fn set_sensor_performance(
         &self,
         request: Request<proto::SensorPerformanceRequest>,
     ) -> Result<Response<proto::SensorPerformanceResponse>, Status> {
-        todo!()
+        let input = request.get_ref();
+
+        let sensor_sleep_time = input
+            .sensor_sleep_time_sec
+            .map(|time| Duration::<Seconds>::new(time as u32).convert());
+
+        let rf_tx_time = input
+            .rf_tx_time_ms
+            .map(|time| Duration::<Milliseconds>::new(time as u32));
+
+        self.manager
+            .lock()
+            .await
+            .set_sensor_performance_settings(
+                input.move_close_led,
+                input.sensor_sleep,
+                sensor_sleep_time,
+                input.performance_mode,
+                rf_tx_time,
+            )
+            .map_err(|e| {
+                Status::internal(format!(
+                    "Failed to set sensor performance settings: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        let resp = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .sensor_performance_settings()
+            .into();
+
+        Ok(Response::new(resp))
     }
 
     // Profile management
