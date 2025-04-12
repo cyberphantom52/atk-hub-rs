@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package atk_hub;
+
+enum SilentHeightMode {
+  SilentHeightModeOff = 0;
+  SilentHeightModeOneMM = 1;
+  SilentHeightModeTwoMM = 2;
+}
+
+message SilentHeightResponse {
+  SilentHeightMode mode = 1;
+}
+
+message SilentHeightRequest {
+  SilentHeightMode mode = 1;
+}

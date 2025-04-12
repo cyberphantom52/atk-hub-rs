@@ -3,11 +3,7 @@ mod manager;
 mod types;
 
 pub mod proto {
-    tonic::include_proto!("_");
-    mod atk_hub {
-        tonic::include_proto!("atk_hub");
-    }
-    pub use atk_hub::*;
+    tonic::include_proto!("atk_hub");
 }
 
 fn parse_field<U, T, E>(
@@ -115,6 +111,126 @@ impl AtkHub for AtkHubService {
             .clone();
 
         Ok(tonic::Response::new(settings.into()))
+    }
+
+    async fn get_mouse_version(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::MouseVersionResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn get_connection_type(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::ConnectionTypeResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_poll_rate(
+        &self,
+        request: tonic::Request<proto::PollRateRequest>,
+    ) -> std::result::Result<tonic::Response<proto::PollRateResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn get_poll_rate(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::PollRateResponse>, tonic::Status> {
+        todo!()
+    }
+
+    // Performance settings
+    async fn get_mouse_performance(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::MousePerformanceResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_mouse_performance(
+        &self,
+        request: tonic::Request<proto::MousePerformanceRequest>,
+    ) -> std::result::Result<tonic::Response<proto::MousePerformanceResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn get_sensor_performance(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::SensorPerformanceResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_sensor_performance(
+        &self,
+        request: tonic::Request<proto::SensorPerformanceRequest>,
+    ) -> std::result::Result<tonic::Response<proto::SensorPerformanceResponse>, tonic::Status> {
+        todo!()
+    }
+
+    // Profile management
+    async fn get_dpi_profiles(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::GetDpiProfilesResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_dpi_profile(
+        &self,
+        request: tonic::Request<proto::SetDpiProfileRequest>,
+    ) -> std::result::Result<tonic::Response<proto::SetDpiProfileResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_dpi_profile_color(
+        &self,
+        request: tonic::Request<proto::SetDpiProfileColorRequest>,
+    ) -> std::result::Result<tonic::Response<proto::SetDpiProfileColorResponse>, tonic::Status>
+    {
+        todo!()
+    }
+    async fn new_dpi_profile(
+        &self,
+        request: tonic::Request<proto::NewDpiProfileRequest>,
+    ) -> std::result::Result<tonic::Response<proto::NewDpiProfileResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn delete_dpi_profile(
+        &self,
+        request: tonic::Request<proto::DeleteDpiProfileRequest>,
+    ) -> std::result::Result<tonic::Response<proto::DeleteDpiProfileResponse>, tonic::Status> {
+        todo!()
+    }
+
+    // Factory reset
+    async fn factory_reset(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::FactoryResetResponse>, tonic::Status> {
+        todo!()
+    }
+
+    // Far distance mode
+    async fn get_far_distance_mode(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::FarDistanceModeResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_far_distance_mode(
+        &self,
+        request: tonic::Request<proto::FarDistanceModeRequest>,
+    ) -> std::result::Result<tonic::Response<proto::FarDistanceModeResponse>, tonic::Status> {
+        todo!()
+    }
+
+    // Silent height
+    async fn get_silent_height(
+        &self,
+        request: tonic::Request<proto::Empty>,
+    ) -> std::result::Result<tonic::Response<proto::SilentHeightResponse>, tonic::Status> {
+        todo!()
+    }
+    async fn set_silent_height(
+        &self,
+        request: tonic::Request<proto::SilentHeightRequest>,
+    ) -> std::result::Result<tonic::Response<proto::SilentHeightResponse>, tonic::Status> {
+        todo!()
     }
 }
 

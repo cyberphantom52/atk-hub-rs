@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package atk_hub;
+
+message MousePerformanceRequest {
+  optional bool motion_sync = 1;
+  optional int32 stabilization_time_ms = 2;
+  optional int32 close_led_time_sec = 3;
+  optional bool linear_correction = 4;
+  optional bool ripple_control = 5;
+}
+
+message MousePerformanceResponse {
+  bool motion_sync = 1;
+  int32 stabilization_time_ms = 2;
+  int32 close_led_time_sec = 3;
+  bool linear_correction = 4;
+  bool ripple_control = 5;
+}
+
+message SensorPerformanceRequest {
+  optional bool move_close_led = 1;
+  optional bool sensor_sleep = 2;
+  optional int32 sensor_sleep_time_sec = 3;
+  optional bool performance_mode = 4;
+  optional int32 rf_tx_time_ms = 5;
+}
+
+message SensorPerformanceResponse {
+  bool move_close_led = 1;
+  bool sensor_sleep = 2;
+  int32 sensor_sleep_time_sec = 3;
+  bool performance_mode = 4;
+  int32 rf_tx_time_ms = 5;
+}

@@ -3,6 +3,10 @@ syntax = "proto3";
 package atk_hub;
 
 import "dpi_led.proto";
+import "mouse_info.proto";
+import "performance.proto";
+import "profiles.proto";
+import "silent_height.proto";
 
 message Empty {}
 
@@ -10,8 +14,53 @@ message BatteryStatusResponse {
   int32 battery_level = 1;
 }
 
+message FactoryResetResponse {
+  bool success = 1;
+}
+
+message FarDistanceModeRequest {
+  bool enabled = 1;
+}
+
+message FarDistanceModeResponse {
+  bool enabled = 1;
+}
+
 service AtkHub {
+  // Battery related methods
   rpc GetBatteryStatus(Empty) returns (BatteryStatusResponse);
+
+  // LED effect methods
   rpc GetLedEffect(Empty) returns (LedEffectResponse);
   rpc SetLedEffect(LedEffectRequest) returns (LedEffectResponse);
+
+  // Mouse info methods
+  rpc GetMouseVersion(Empty) returns (MouseVersionResponse);
+  rpc GetConnectionType(Empty) returns (ConnectionTypeResponse);
+  rpc SetPollRate(PollRateRequest) returns (PollRateResponse);
+  rpc GetPollRate(Empty) returns (PollRateResponse);
+
+  // Performance settings
+  rpc GetMousePerformance(Empty) returns (MousePerformanceResponse);
+  rpc SetMousePerformance(MousePerformanceRequest) returns (MousePerformanceResponse);
+  rpc GetSensorPerformance(Empty) returns (SensorPerformanceResponse);
+  rpc SetSensorPerformance(SensorPerformanceRequest) returns (SensorPerformanceResponse);
+
+  // Profile management
+  rpc GetDpiProfiles(Empty) returns (GetDpiProfilesResponse);
+  rpc SetDpiProfile(SetDpiProfileRequest) returns (SetDpiProfileResponse);
+  rpc SetDpiProfileColor(SetDpiProfileColorRequest) returns (SetDpiProfileColorResponse);
+  rpc NewDpiProfile(NewDpiProfileRequest) returns (NewDpiProfileResponse);
+  rpc DeleteDpiProfile(DeleteDpiProfileRequest) returns (DeleteDpiProfileResponse);
+
+  // Factory reset
+  rpc FactoryReset(Empty) returns (FactoryResetResponse);
+
+  // Far distance mode
+  rpc GetFarDistanceMode(Empty) returns (FarDistanceModeResponse);
+  rpc SetFarDistanceMode(FarDistanceModeRequest) returns (FarDistanceModeResponse);
+
+  // Silent height
+  rpc GetSilentHeight(Empty) returns (SilentHeightResponse);
+  rpc SetSilentHeight(SilentHeightRequest) returns (SilentHeightResponse);
 }

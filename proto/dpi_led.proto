@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package atk_hub;
+
 enum LedEffectMode {
     LedEffectModeInvalid = 0;
     LedEffectModeStatic = 1;
