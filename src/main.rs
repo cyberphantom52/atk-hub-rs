@@ -226,11 +226,13 @@ impl AtkHub for AtkHubService {
     }
 
     // Factory reset
-    async fn factory_reset(
-        &self,
-        _: Request<Empty>,
-    ) -> Result<Response<proto::FactoryResetResponse>, Status> {
-        todo!()
+    async fn factory_reset(&self, _: Request<Empty>) -> Result<Response<Empty>, Status> {
+        self.manager
+            .lock()
+            .await
+            .factory_reset()
+            .map(|_| Response::new(Empty {}))
+            .map_err(|e| Status::internal(format!("Failed to factory reset: {}", e.to_string())))
     }
 
     // Far distance mode

@@ -14,10 +14,6 @@ message BatteryStatusResponse {
   int32 battery_level = 1;
 }
 
-message FactoryResetResponse {
-  bool success = 1;
-}
-
 message FarDistanceModeRequest {
   bool enabled = 1;
 }
@@ -54,7 +50,7 @@ service AtkHub {
   rpc DeleteDpiProfile(DeleteDpiProfileRequest) returns (DeleteDpiProfileResponse);
 
   // Factory reset
-  rpc FactoryReset(Empty) returns (FactoryResetResponse);
+  rpc FactoryReset(Empty) returns (Empty);
 
   // Far distance mode
   rpc GetFarDistanceMode(Empty) returns (FarDistanceModeResponse);
