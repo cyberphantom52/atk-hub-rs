@@ -360,17 +360,9 @@ impl AtkHub for AtkHubService {
         &self,
         _: Request<Empty>,
     ) -> Result<Response<proto::SilentHeightResponse>, Status> {
-        let resp = self
-            .manager
-            .lock()
-            .await
-            .profile()
-            .silent_height()
-            .silent_height();
+        let resp = self.manager.lock().await.profile().silent_height().clone();
 
-        Ok(Response::new(proto::SilentHeightResponse {
-            mode: resp as _,
-        }))
+        Ok(Response::new(resp.into()))
     }
 
     async fn set_silent_height(

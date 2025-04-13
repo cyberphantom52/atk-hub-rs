@@ -37,8 +37,19 @@ impl From<u8> for SilentHeightMode {
     }
 }
 
-#[derive(Command, Default, Debug)]
+#[derive(Command, Clone, Default, Debug)]
 pub struct SilentHeight(SilentHeightMode);
+
+impl Into<proto::SilentHeightResponse> for SilentHeight {
+    fn into(self) -> proto::SilentHeightResponse {
+        let height = match self.silent_height() {
+            SilentHeightMode::Off => proto::SilentHeightMode::Off,
+            SilentHeightMode::OneMm => proto::SilentHeightMode::OneMm,
+            SilentHeightMode::TwoMm => proto::SilentHeightMode::TwoMm,
+        };
+        proto::SilentHeightResponse { mode: height as _ }
+    }
+}
 
 #[allow(dead_code)]
 impl SilentHeight {
