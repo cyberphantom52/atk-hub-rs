@@ -1,4 +1,6 @@
 use libatk_rs::types::Error;
+
+use crate::proto;
 static DPI_STEP: u16 = 50;
 
 pub struct Milliseconds;
@@ -149,11 +151,22 @@ impl Into<[u8; 4]> for Dpi {
     }
 }
 
-impl Dpi {
-    pub fn new(dpi: u16) -> Self {
-        Dpi(dpi)
+impl Into<proto::Dpi> for Dpi {
+    fn into(self) -> proto::Dpi {
+        proto::Dpi {
+            x: self.0 as i32,
+            y: self.0 as i32,
+        }
     }
+}
 
+impl From<proto::Dpi> for Dpi {
+    fn from(proto: proto::Dpi) -> Self {
+        Dpi(proto.x as u16)
+    }
+}
+
+impl Dpi {
     pub fn dpi(&self) -> u16 {
         self.0
     }
@@ -164,6 +177,26 @@ pub struct Color {
     red: u8,
     green: u8,
     blue: u8,
+}
+
+impl Into<proto::Color> for Color {
+    fn into(self) -> proto::Color {
+        proto::Color {
+            red: self.red as i32,
+            green: self.green as i32,
+            blue: self.blue as i32,
+        }
+    }
+}
+
+impl From<proto::Color> for Color {
+    fn from(proto: proto::Color) -> Self {
+        Color {
+            red: proto.red as u8,
+            green: proto.green as u8,
+            blue: proto.blue as u8,
+        }
+    }
 }
 
 impl Default for Color {
@@ -217,11 +250,5 @@ impl Into<[u8; 4]> for Color {
                 .wrapping_sub(self.blue);
 
         [self.red, self.green, self.blue, checksum]
-    }
-}
-
-impl Color {
-    pub fn new(red: u8, green: u8, blue: u8) -> Self {
-        Color { red, green, blue }
     }
 }

@@ -8,63 +8,44 @@ message Color {
   int32 blue = 3;
 }
 
-enum DpiPreset {
-  DpiPresetInvalid = 0;
-  DpiPresetPreset1 = 1;
-  DpiPresetPreset2 = 2;
-  DpiPresetPreset3 = 3;
-  DpiPresetPreset4 = 4;
-  DpiPresetPreset5 = 5;
-  DpiPresetPreset6 = 6;
-  DpiPresetPreset7 = 7;
-  DpiPresetPreset8 = 8;
+message Dpi {
+    int32 x = 1;
+    int32 y = 2;
 }
 
-message SetDpiProfileRequest {
-  DpiPreset preset = 1;
-  int32 dpi = 2;
+enum Gear {
+  GearInvalid = 0;
+  GearOne = 1;
+  GearTwo = 2;
+  GearThree = 3;
+  GearFour = 4;
+  GearFive = 5;
+  GearSix = 6;
+  GearSeven = 7;
+  GearEight = 8;
 }
 
-message SetDpiProfileResponse {
-  DpiPreset preset = 1;
-  int32 dpi = 2;
-}
-
-message SetDpiProfileColorRequest {
-  DpiPreset preset = 1;
-  Color color = 2;
-}
-
-message SetDpiProfileColorResponse {
-  DpiPreset preset = 1;
-  Color color = 2;
-}
-
-message NewDpiProfileRequest {
-  int32 dpi = 1;
-  Color color = 2;
-}
-
-message NewDpiProfileResponse {
-  DpiPreset preset = 1;
-  int32 dpi = 2;
+message Profile {
+  Gear gear = 1;
+  Dpi dpi = 2;
   Color color = 3;
 }
 
-message DeleteDpiProfileRequest {
-  DpiPreset preset = 1;
+message GetProfilesResponse {
+  repeated Profile profiles = 1;
 }
 
-message DeleteDpiProfileResponse {
-  int32 remaining_profiles = 1;
+message NewGearRequest {
+    Dpi dpi = 2;
+    Color color = 3;
 }
 
-message DpiProfile {
-  DpiPreset preset = 1;
-  int32 dpi = 2;
-  Color color = 3;
+message UpdateGearRequest {
+  Gear gear = 1;
+  optional Dpi dpi = 2;
+  optional Color color = 3;
 }
 
-message GetDpiProfilesResponse {
-  repeated DpiProfile profiles = 1;
+message DeleteGearRequest {
+  Gear gear = 1;
 }

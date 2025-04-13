@@ -8,6 +8,7 @@ pub mod proto {
     pub(crate) const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("atk_hub");
 }
 
+use commands::prelude::Preset;
 use proto::Empty;
 use tonic::{Request, Response, Status};
 
@@ -279,32 +280,122 @@ impl AtkHub for AtkHubService {
     async fn get_dpi_profiles(
         &self,
         _: Request<Empty>,
-    ) -> Result<Response<proto::GetDpiProfilesResponse>, Status> {
-        todo!()
+    ) -> Result<Response<proto::GetProfilesResponse>, Status> {
+        let profiles: Vec<proto::Profile> = self
+            .manager
+            .lock()
+            .await
+            .profile()
+            .dpi_profiles()
+            .iter()
+            .enumerate()
+            .map(|(index, profile)| proto::Profile {
+                gear: 1 + index as i32,
+                dpi: Some(profile.dpi().into()),
+                color: Some(profile.color().into()),
+            })
+            .collect();
+
+        Ok(Response::new(proto::GetProfilesResponse { profiles }))
     }
+
     async fn set_dpi_profile(
         &self,
-        request: Request<proto::SetDpiProfileRequest>,
-    ) -> Result<Response<proto::SetDpiProfileResponse>, Status> {
-        todo!()
+        request: Request<proto::UpdateGearRequest>,
+    ) -> Result<Response<proto::Profile>, Status> {
+        let input = request.get_ref();
+        let index = Preset::try_from(input.gear as u8).unwrap();
+
+        if let Some(color) = input.color {
+            self.manager
+                .lock()
+                .await
+                .set_dpi_profile_color(index, color.into())
+                .map_err(|e| {
+                    Status::internal(format!("Failed to set DPI profile: {}", e.to_string()))
+                })?;
+        }
+
+        if let Some(dpi) = input.dpi {
+            self.manager
+                .lock()
+                .await
+                .set_dpi_profile_dpi(index, dpi.into())
+                .map_err(|e| {
+                    Status::internal(format!("Failed to set DPI profile: {}", e.to_string()))
+                })?;
+        }
+
+        let preset = self.manager.lock().await.profile().preset(index);
+        let resp = proto::Profile {
+            gear: index as _,
+            dpi: Some(preset.dpi().into()),
+            color: Some(preset.color().into()),
+        };
+        Ok(Response::new(resp))
     }
-    async fn set_dpi_profile_color(
-        &self,
-        request: Request<proto::SetDpiProfileColorRequest>,
-    ) -> Result<Response<proto::SetDpiProfileColorResponse>, Status> {
-        todo!()
-    }
+
     async fn new_dpi_profile(
         &self,
-        request: Request<proto::NewDpiProfileRequest>,
-    ) -> Result<Response<proto::NewDpiProfileResponse>, Status> {
-        todo!()
+        request: Request<proto::NewGearRequest>,
+    ) -> Result<Response<proto::Profile>, Status> {
+        let input = request.get_ref();
+        if input.dpi.is_none() {
+            return Err(Status::invalid_argument("DPI is required"));
+        }
+        if input.color.is_none() {
+            return Err(Status::invalid_argument("Color is required"));
+        }
+
+        let dpi = input.dpi.unwrap();
+        let color = input.color.unwrap();
+        self.manager
+            .lock()
+            .await
+            .new_dpi_profile(dpi.into(), color.into())
+            .map_err(|e| {
+                Status::internal(format!(
+                    "Failed to create new DPI profile: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        let index = Preset::try_from(
+            self.manager
+                .lock()
+                .await
+                .profile()
+                .mouse_info()
+                .num_profile(),
+        )
+        .unwrap();
+
+        let preset = self.manager.lock().await.profile().preset(index);
+
+        let resp = proto::Profile {
+            gear: index as _,
+            dpi: Some(preset.dpi().into()),
+            color: Some(preset.color().into()),
+        };
+        Ok(Response::new(resp))
     }
+
     async fn delete_dpi_profile(
         &self,
-        request: Request<proto::DeleteDpiProfileRequest>,
-    ) -> Result<Response<proto::DeleteDpiProfileResponse>, Status> {
-        todo!()
+        request: Request<proto::DeleteGearRequest>,
+    ) -> Result<Response<Empty>, Status> {
+        let input = request.get_ref();
+        let preset = Preset::try_from(input.gear as u8).unwrap();
+
+        self.manager
+            .lock()
+            .await
+            .delete_dpi_profile(preset)
+            .map_err(|e| {
+                Status::internal(format!("Failed to delete DPI profile: {}", e.to_string()))
+            })?;
+
+        Ok(Response::new(proto::Empty {}))
     }
 
     // Factory reset

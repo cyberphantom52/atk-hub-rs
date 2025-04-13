@@ -53,6 +53,17 @@ impl Profile {
         &self.dpi_color[pair as usize]
     }
 
+    pub fn dpi_profiles(&self) -> Vec<Gear> {
+        let mut gears = Vec::new();
+        let num_profile = self.mouse_info.num_profile();
+        for i in 1..=num_profile {
+            let preset = Preset::try_from(i).unwrap();
+            let gear = self.preset(preset);
+            gears.push(gear);
+        }
+        gears
+    }
+
     pub fn preset(&self, preset: Preset) -> Gear {
         let pair = Pair::from(preset);
         let slot = Slot::from(preset);

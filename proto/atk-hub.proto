@@ -43,11 +43,10 @@ service AtkHub {
   rpc SetSensorPerformance(SensorPerformanceRequest) returns (SensorPerformanceResponse);
 
   // Profile management
-  rpc GetDpiProfiles(Empty) returns (GetDpiProfilesResponse);
-  rpc SetDpiProfile(SetDpiProfileRequest) returns (SetDpiProfileResponse);
-  rpc SetDpiProfileColor(SetDpiProfileColorRequest) returns (SetDpiProfileColorResponse);
-  rpc NewDpiProfile(NewDpiProfileRequest) returns (NewDpiProfileResponse);
-  rpc DeleteDpiProfile(DeleteDpiProfileRequest) returns (DeleteDpiProfileResponse);
+  rpc GetDpiProfiles(Empty) returns (GetProfilesResponse);
+  rpc SetDpiProfile(UpdateGearRequest) returns (Profile);
+  rpc NewDpiProfile(NewGearRequest) returns (Profile);
+  rpc DeleteDpiProfile(DeleteGearRequest) returns (Empty);
 
   // Factory reset
   rpc FactoryReset(Empty) returns (Empty);
