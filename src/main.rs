@@ -8,7 +8,7 @@ pub mod proto {
     pub(crate) const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("atk_hub");
 }
 
-use commands::prelude::Preset;
+use commands::prelude::Gear;
 use proto::Empty;
 use tonic::{Request, Response, Status};
 
@@ -277,16 +277,16 @@ impl AtkHub for AtkHubService {
     }
 
     // Profile management
-    async fn get_dpi_profiles(
+    async fn get_gears(
         &self,
         _: Request<Empty>,
-    ) -> Result<Response<proto::GetProfilesResponse>, Status> {
+    ) -> Result<Response<proto::GetGearsResponse>, Status> {
         let profiles: Vec<proto::Profile> = self
             .manager
             .lock()
             .await
             .profile()
-            .dpi_profiles()
+            .gears()
             .iter()
             .enumerate()
             .map(|(index, profile)| proto::Profile {
@@ -296,21 +296,43 @@ impl AtkHub for AtkHubService {
             })
             .collect();
 
-        Ok(Response::new(proto::GetProfilesResponse { profiles }))
+        Ok(Response::new(proto::GetGearsResponse { profiles }))
     }
 
-    async fn set_dpi_profile(
+    async fn set_gear(
+        &self,
+        request: tonic::Request<proto::SetGearRequest>,
+    ) -> std::result::Result<Response<Empty>, Status> {
+        let input = request.get_ref();
+
+        let gear = input
+            .gear()
+            .try_into()
+            .map_err(|_| Status::internal("Failed to parse gear: Must be 1, 2, 3, 4, 5, 6 or 7"))?;
+
+        self.manager
+            .lock()
+            .await
+            .set_active_gear(gear)
+            .map(|_| Response::new(Empty {}))
+            .map_err(|e| Status::internal(format!("Failed to set active gear: {}", e.to_string())))
+    }
+
+    async fn update_gear(
         &self,
         request: Request<proto::UpdateGearRequest>,
     ) -> Result<Response<proto::Profile>, Status> {
         let input = request.get_ref();
-        let index = Preset::try_from(input.gear as u8).unwrap();
+        let gear = input
+            .gear()
+            .try_into()
+            .map_err(|_| Status::internal("Failed to parse gear: Must be 1, 2, 3, 4, 5, 6 or 7"))?;
 
         if let Some(color) = input.color {
             self.manager
                 .lock()
                 .await
-                .set_dpi_profile_color(index, color.into())
+                .update_gear_color(gear, color.into())
                 .map_err(|e| {
                     Status::internal(format!("Failed to set DPI profile: {}", e.to_string()))
                 })?;
@@ -320,22 +342,22 @@ impl AtkHub for AtkHubService {
             self.manager
                 .lock()
                 .await
-                .set_dpi_profile_dpi(index, dpi.into())
+                .update_gear_dpi(gear, dpi.into())
                 .map_err(|e| {
                     Status::internal(format!("Failed to set DPI profile: {}", e.to_string()))
                 })?;
         }
 
-        let preset = self.manager.lock().await.profile().preset(index);
+        let preset = self.manager.lock().await.profile().gear(gear);
         let resp = proto::Profile {
-            gear: index as _,
+            gear: gear as _,
             dpi: Some(preset.dpi().into()),
             color: Some(preset.color().into()),
         };
         Ok(Response::new(resp))
     }
 
-    async fn new_dpi_profile(
+    async fn new_gear(
         &self,
         request: Request<proto::NewGearRequest>,
     ) -> Result<Response<proto::Profile>, Status> {
@@ -352,7 +374,7 @@ impl AtkHub for AtkHubService {
         self.manager
             .lock()
             .await
-            .new_dpi_profile(dpi.into(), color.into())
+            .new_gear(dpi.into(), color.into())
             .map_err(|e| {
                 Status::internal(format!(
                     "Failed to create new DPI profile: {}",
@@ -360,7 +382,7 @@ impl AtkHub for AtkHubService {
                 ))
             })?;
 
-        let index = Preset::try_from(
+        let gear = Gear::try_from(
             self.manager
                 .lock()
                 .await
@@ -370,30 +392,29 @@ impl AtkHub for AtkHubService {
         )
         .unwrap();
 
-        let preset = self.manager.lock().await.profile().preset(index);
+        let preset = self.manager.lock().await.profile().gear(gear);
 
         let resp = proto::Profile {
-            gear: index as _,
+            gear: gear as _,
             dpi: Some(preset.dpi().into()),
             color: Some(preset.color().into()),
         };
         Ok(Response::new(resp))
     }
 
-    async fn delete_dpi_profile(
+    async fn delete_gear(
         &self,
         request: Request<proto::DeleteGearRequest>,
     ) -> Result<Response<Empty>, Status> {
         let input = request.get_ref();
-        let preset = Preset::try_from(input.gear as u8).unwrap();
+        let gear = input
+            .gear()
+            .try_into()
+            .map_err(|_| Status::internal("Failed to parse gear: Must be 1, 2, 3, 4, 5, 6 or 7"))?;
 
-        self.manager
-            .lock()
-            .await
-            .delete_dpi_profile(preset)
-            .map_err(|e| {
-                Status::internal(format!("Failed to delete DPI profile: {}", e.to_string()))
-            })?;
+        self.manager.lock().await.delete_gear(gear).map_err(|e| {
+            Status::internal(format!("Failed to delete DPI profile: {}", e.to_string()))
+        })?;
 
         Ok(Response::new(proto::Empty {}))
     }

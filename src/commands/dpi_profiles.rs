@@ -1,17 +1,56 @@
 use libatk_rs::prelude::*;
 
-use crate::types::{Color, Dpi};
+use crate::{
+    proto,
+    types::{Color, Dpi},
+};
 
 #[derive(Debug, Clone, Copy)]
-pub enum Preset {
-    Preset1,
-    Preset2,
-    Preset3,
-    Preset4,
-    Preset5,
-    Preset6,
-    Preset7,
-    Preset8,
+pub enum Gear {
+    One = 1,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
+
+impl Into<proto::Gear> for Gear {
+    fn into(self) -> proto::Gear {
+        match self {
+            Gear::One => proto::Gear::One,
+            Gear::Two => proto::Gear::Two,
+            Gear::Three => proto::Gear::Three,
+            Gear::Four => proto::Gear::Four,
+            Gear::Five => proto::Gear::Five,
+            Gear::Six => proto::Gear::Six,
+            Gear::Seven => proto::Gear::Seven,
+            Gear::Eight => proto::Gear::Eight,
+        }
+    }
+}
+
+impl TryFrom<proto::Gear> for Gear {
+    type Error = Error;
+
+    fn try_from(value: proto::Gear) -> Result<Self, Self::Error> {
+        match value {
+            proto::Gear::One => Ok(Gear::One),
+            proto::Gear::Two => Ok(Gear::Two),
+            proto::Gear::Three => Ok(Gear::Three),
+            proto::Gear::Four => Ok(Gear::Four),
+            proto::Gear::Five => Ok(Gear::Five),
+            proto::Gear::Six => Ok(Gear::Six),
+            proto::Gear::Seven => Ok(Gear::Seven),
+            proto::Gear::Eight => Ok(Gear::Eight),
+            _ => Err(Error::ParseError(format!(
+                "Preset: Invalid DPI profile: {}",
+                value as u8
+            ))),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -23,13 +62,13 @@ pub enum Pair {
     Pair4,
 }
 
-impl From<Preset> for Pair {
-    fn from(value: Preset) -> Self {
+impl From<Gear> for Pair {
+    fn from(value: Gear) -> Self {
         match value {
-            Preset::Preset1 | Preset::Preset2 => Pair::Pair1,
-            Preset::Preset3 | Preset::Preset4 => Pair::Pair2,
-            Preset::Preset5 | Preset::Preset6 => Pair::Pair3,
-            Preset::Preset7 | Preset::Preset8 => Pair::Pair4,
+            Gear::One | Gear::Two => Pair::Pair1,
+            Gear::Three | Gear::Four => Pair::Pair2,
+            Gear::Five | Gear::Six => Pair::Pair3,
+            Gear::Seven | Gear::Eight => Pair::Pair4,
         }
     }
 }
@@ -40,30 +79,30 @@ pub enum Slot {
     Second = 0x4,
 }
 
-impl From<Preset> for Slot {
-    fn from(value: Preset) -> Self {
+impl From<Gear> for Slot {
+    fn from(value: Gear) -> Self {
         match value {
-            Preset::Preset1 | Preset::Preset3 => Slot::First,
-            Preset::Preset2 | Preset::Preset4 => Slot::Second,
-            Preset::Preset5 | Preset::Preset7 => Slot::First,
-            Preset::Preset6 | Preset::Preset8 => Slot::Second,
+            Gear::One | Gear::Three => Slot::First,
+            Gear::Two | Gear::Four => Slot::Second,
+            Gear::Five | Gear::Seven => Slot::First,
+            Gear::Six | Gear::Eight => Slot::Second,
         }
     }
 }
 
-impl TryFrom<u8> for Preset {
+impl TryFrom<u8> for Gear {
     type Error = Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            1 => Ok(Preset::Preset1),
-            2 => Ok(Preset::Preset2),
-            3 => Ok(Preset::Preset3),
-            4 => Ok(Preset::Preset4),
-            5 => Ok(Preset::Preset5),
-            6 => Ok(Preset::Preset6),
-            7 => Ok(Preset::Preset7),
-            8 => Ok(Preset::Preset8),
+            1 => Ok(Gear::One),
+            2 => Ok(Gear::Two),
+            3 => Ok(Gear::Three),
+            4 => Ok(Gear::Four),
+            5 => Ok(Gear::Five),
+            6 => Ok(Gear::Six),
+            7 => Ok(Gear::Seven),
+            8 => Ok(Gear::Eight),
             _ => Err(Error::ParseError(format!(
                 "Preset: Invalid DPI profile: {}",
                 value
@@ -107,14 +146,14 @@ impl TryFrom<EEPROMAddress> for Pair {
 }
 
 #[derive(Debug, Clone)]
-pub struct Gear {
+pub struct Profile {
     dpi: Dpi,
     color: Color,
 }
 
-impl Gear {
+impl Profile {
     pub fn new(dpi: Dpi, color: Color) -> Self {
-        Gear { dpi, color }
+        Profile { dpi, color }
     }
 
     pub fn dpi(&self) -> Dpi {
@@ -126,7 +165,7 @@ impl Gear {
     }
 }
 
-impl std::fmt::Display for Gear {
+impl std::fmt::Display for Profile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "DPI: {} | Color: {}", self.dpi, self.color)
     }

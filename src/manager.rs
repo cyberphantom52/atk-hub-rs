@@ -1,6 +1,7 @@
 use std::cell::{Ref, RefCell};
 
 use crate::{
+    commands::prelude::Profile as GearProfile,
     commands::prelude::*,
     proto::{LedBreathingRate, LedBrightnessLevel, LedEffectMode},
     types::{Color, Decaseconds, Dpi, Duration, Milliseconds, Seconds},
@@ -53,25 +54,25 @@ impl Profile {
         &self.dpi_color[pair as usize]
     }
 
-    pub fn dpi_profiles(&self) -> Vec<Gear> {
+    pub fn gears(&self) -> Vec<GearProfile> {
         let mut gears = Vec::new();
         let num_profile = self.mouse_info.num_profile();
         for i in 1..=num_profile {
-            let preset = Preset::try_from(i).unwrap();
-            let gear = self.preset(preset);
+            let preset = Gear::try_from(i).unwrap();
+            let gear = self.gear(preset);
             gears.push(gear);
         }
         gears
     }
 
-    pub fn preset(&self, preset: Preset) -> Gear {
+    pub fn gear(&self, preset: Gear) -> GearProfile {
         let pair = Pair::from(preset);
         let slot = Slot::from(preset);
 
         let dpi = &self.dpi[pair as usize];
         let color = &self.dpi_color[pair as usize];
 
-        Gear::new(dpi.dpi(slot), color.color(slot))
+        GearProfile::new(dpi.dpi(slot), color.color(slot))
     }
 }
 
@@ -384,14 +385,30 @@ impl MouseManager {
         })
     }
 
-    pub fn set_dpi_profile_color(
+    pub fn set_active_gear(&self, gear: Gear) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .active_profile(gear as _)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn update_gear_color(
         &self,
-        preset: Preset,
+        gear: Gear,
         color: Color,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = Pair::from(preset);
-            let slot = Slot::from(preset);
+            let pair = Pair::from(gear);
+            let slot = Slot::from(gear);
 
             let response = self
                 .profile()
@@ -407,14 +424,10 @@ impl MouseManager {
         })
     }
 
-    pub fn set_dpi_profile_dpi(
-        &self,
-        preset: Preset,
-        dpi: Dpi,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_gear_dpi(&self, gear: Gear, dpi: Dpi) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = Pair::from(preset);
-            let slot = Slot::from(preset);
+            let pair = Pair::from(gear);
+            let slot = Slot::from(gear);
 
             let response = self
                 .profile()
@@ -430,11 +443,7 @@ impl MouseManager {
         })
     }
 
-    pub fn new_dpi_profile(
-        &self,
-        dpi: Dpi,
-        color: Color,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn new_gear(&self, dpi: Dpi, color: Color) -> Result<(), Box<dyn std::error::Error>> {
         let num_profile = self.profile().mouse_info().num_profile();
         if num_profile >= 8 {
             return Err("Maximum number of profiles reached".into());
@@ -449,10 +458,10 @@ impl MouseManager {
                 .build()
                 .execute(&self.device)?;
 
-            let profile = Preset::try_from(num_profile + 1)?;
+            let gear = Gear::try_from(num_profile + 1)?;
 
-            self.set_dpi_profile_dpi(profile, dpi)?;
-            self.set_dpi_profile_color(profile, color)?;
+            self.update_gear_dpi(gear, dpi)?;
+            self.update_gear_color(gear, color)?;
 
             self.profile.borrow_mut().mouse_info = response.config();
 
@@ -460,30 +469,30 @@ impl MouseManager {
         })
     }
 
-    pub fn delete_dpi_profile(&self, preset: Preset) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn delete_gear(&self, gear: Gear) -> Result<(), Box<dyn std::error::Error>> {
         let num_profile = self.profile().mouse_info().num_profile();
         let active_profile = self.profile().mouse_info().active_profile();
         if num_profile == active_profile {
             return Err("Cannot delete the active profile".into());
         }
 
-        if preset as u8 > num_profile {
+        if gear as u8 > num_profile {
             return Err(format!(
                 "Profile {} has not been created yet. Last profile is {}",
-                preset as u8, num_profile
+                gear as u8, num_profile
             )
             .into());
         }
 
         self.wrapper(|_| {
-            if num_profile != preset as u8 {
-                for i in (preset as u8 + 1)..=num_profile {
-                    let src_preset = Preset::try_from(i)?;
-                    let gear = self.profile().preset(src_preset);
+            if num_profile != gear as u8 {
+                for i in (gear as u8 + 1)..=num_profile {
+                    let src_gear = Gear::try_from(i)?;
+                    let gear = self.profile().gear(src_gear);
 
-                    let dst_preset = Preset::try_from(i - 1)?;
-                    self.set_dpi_profile_dpi(dst_preset, gear.dpi())?;
-                    self.set_dpi_profile_color(dst_preset, gear.color())?;
+                    let dst_gear = Gear::try_from(i - 1)?;
+                    self.update_gear_dpi(dst_gear, gear.dpi())?;
+                    self.update_gear_color(dst_gear, gear.color())?;
                 }
             }
 

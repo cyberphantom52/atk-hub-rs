@@ -31,13 +31,17 @@ message Profile {
   Color color = 3;
 }
 
-message GetProfilesResponse {
+message GetGearsResponse {
   repeated Profile profiles = 1;
 }
 
 message NewGearRequest {
     Dpi dpi = 2;
     Color color = 3;
+}
+
+message SetGearRequest {
+    Gear gear = 1;
 }
 
 message UpdateGearRequest {
