@@ -462,8 +462,17 @@ impl MouseManager {
 
     pub fn delete_dpi_profile(&self, preset: Preset) -> Result<(), Box<dyn std::error::Error>> {
         let num_profile = self.profile().mouse_info().num_profile();
-        if num_profile <= 1 {
-            return Err("Cannot delete the last profile".into());
+        let active_profile = self.profile().mouse_info().active_profile();
+        if num_profile == active_profile {
+            return Err("Cannot delete the active profile".into());
+        }
+
+        if preset as u8 > num_profile {
+            return Err(format!(
+                "Profile {} has not been created yet. Last profile is {}",
+                preset as u8, num_profile
+            )
+            .into());
         }
 
         self.wrapper(|_| {
