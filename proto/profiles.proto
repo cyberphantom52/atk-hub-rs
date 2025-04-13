@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package atk_hub;
+
+message Color {
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
+}
+
+message Dpi {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+enum Gear {
+  GearInvalid = 0;
+  GearOne = 1;
+  GearTwo = 2;
+  GearThree = 3;
+  GearFour = 4;
+  GearFive = 5;
+  GearSix = 6;
+  GearSeven = 7;
+  GearEight = 8;
+}
+
+message Profile {
+  Gear gear = 1;
+  Dpi dpi = 2;
+  Color color = 3;
+}
+
+message GetGearsResponse {
+  repeated Profile profiles = 1;
+}
+
+message NewGearRequest {
+    Dpi dpi = 2;
+    Color color = 3;
+}
+
+message SetGearRequest {
+    Gear gear = 1;
+}
+
+message UpdateGearRequest {
+  Gear gear = 1;
+  optional Dpi dpi = 2;
+  optional Color color = 3;
+}
+
+message DeleteGearRequest {
+  Gear gear = 1;
+}

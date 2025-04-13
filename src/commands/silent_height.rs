@@ -1,5 +1,7 @@
 use libatk_rs::prelude::*;
 
+use crate::proto;
+
 #[derive(Default, Debug, Copy, Clone)]
 #[repr(u8)]
 pub enum SilentHeightMode {
@@ -7,6 +9,21 @@ pub enum SilentHeightMode {
     Off,
     OneMm,
     TwoMm,
+}
+
+impl TryFrom<proto::SilentHeightMode> for SilentHeightMode {
+    type Error = Error;
+
+    fn try_from(value: proto::SilentHeightMode) -> Result<Self, Self::Error> {
+        match value {
+            proto::SilentHeightMode::Off => Ok(SilentHeightMode::Off),
+            proto::SilentHeightMode::OneMm => Ok(SilentHeightMode::OneMm),
+            proto::SilentHeightMode::TwoMm => Ok(SilentHeightMode::TwoMm),
+            _ => Err(Error::ParseError(
+                "Failed to parse SilentHeightMode".to_string(),
+            )),
+        }
+    }
 }
 
 impl From<u8> for SilentHeightMode {
@@ -20,8 +37,19 @@ impl From<u8> for SilentHeightMode {
     }
 }
 
-#[derive(Command, Default, Debug)]
+#[derive(Command, Clone, Default, Debug)]
 pub struct SilentHeight(SilentHeightMode);
+
+impl Into<proto::SilentHeightResponse> for SilentHeight {
+    fn into(self) -> proto::SilentHeightResponse {
+        let height = match self.silent_height() {
+            SilentHeightMode::Off => proto::SilentHeightMode::Off,
+            SilentHeightMode::OneMm => proto::SilentHeightMode::OneMm,
+            SilentHeightMode::TwoMm => proto::SilentHeightMode::TwoMm,
+        };
+        proto::SilentHeightResponse { mode: height as _ }
+    }
+}
 
 #[allow(dead_code)]
 impl SilentHeight {

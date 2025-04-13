@@ -1,8 +1,10 @@
 use std::cell::{Ref, RefCell};
 
 use crate::{
+    commands::prelude::Profile as GearProfile,
     commands::prelude::*,
-    types::{Decaseconds, Duration, Milliseconds},
+    proto::{LedBreathingRate, LedBrightnessLevel, LedEffectMode},
+    types::{Color, Decaseconds, Dpi, Duration, Milliseconds, Seconds},
 };
 use libatk_rs::prelude::*;
 
@@ -48,26 +50,57 @@ impl Profile {
         &self.dpi[pair as usize]
     }
 
-    pub fn dpi_profile(&self, pair: Pair) -> (Gear, Gear) {
+    pub fn color_pair_setting(&self, pair: Pair) -> &ColorPairSetting {
+        &self.dpi_color[pair as usize]
+    }
+
+    pub fn gears(&self) -> Vec<GearProfile> {
+        let mut gears = Vec::new();
+        let num_profile = self.mouse_info.num_profile();
+        for i in 1..=num_profile {
+            let preset = Gear::try_from(i).unwrap();
+            let gear = self.gear(preset);
+            gears.push(gear);
+        }
+        gears
+    }
+
+    pub fn gear(&self, preset: Gear) -> GearProfile {
+        let pair = Pair::from(preset);
+        let slot = Slot::from(preset);
+
         let dpi = &self.dpi[pair as usize];
         let color = &self.dpi_color[pair as usize];
-        (
-            Gear::new(dpi.dpi(Slot::First), color.color(Slot::First)),
-            Gear::new(dpi.dpi(Slot::Second), color.color(Slot::Second)),
-        )
+
+        GearProfile::new(dpi.dpi(slot), color.color(slot))
     }
 }
 
+#[derive(Debug)]
 pub struct MouseManager {
     profile: RefCell<Profile>,
     device: Device,
 }
 
+impl Default for MouseManager {
+    fn default() -> Self {
+        // Hardcoding to R1 Pro for now
+        // TODO: Make this dynamic
+        let device = if let Ok(device) = Device::new(0x3554, 0xf58a, 0xff04, 0x2) {
+            device
+        } else {
+            Device::new(0x3554, 0xf58c, 0xff04, 0x2).unwrap()
+        };
+
+        MouseManager::new(device).unwrap()
+    }
+}
+
 #[allow(dead_code)]
 impl MouseManager {
     pub fn new(device: Device) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut instance = Self {
-            profile: RefCell::new(Profile::default()),
+        let instance = Self {
+            profile: Default::default(),
             device,
         };
 
@@ -85,7 +118,7 @@ impl MouseManager {
         Ok(result)
     }
 
-    fn load_profile(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    fn load_profile(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.wait_for_mouse_online()?;
 
         /* TODO: Keys */
@@ -184,12 +217,41 @@ impl MouseManager {
         })
     }
 
+    pub fn mouse_version(&self) -> Result<GetMouseVersion, Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let resp = Command::<GetMouseVersion>::query().execute(&self.device)?;
+
+            Ok(resp.config())
+        })
+    }
+
     pub fn connection_type(&self) -> Result<ConnectionType, Box<dyn std::error::Error>> {
         self.wrapper(|_| {
             let resp = Command::<DownloadData>::query().execute(&self.device)?;
 
             Ok(resp.config().connection_type())
         })
+    }
+
+    pub fn factory_reset(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            Command::<FactoryReset>::query().execute(&self.device)?;
+            Ok(())
+        })?;
+
+        self.load_profile()?;
+
+        Ok(())
+    }
+
+    pub fn set_hibernation_time(
+        &self,
+        time: Duration<Seconds>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.set_mouse_performance_settings(None, None, Some(time.convert()), None, None)?;
+        self.set_sensor_performance_settings(None, None, Some(time.convert()), None, None)?;
+
+        Ok(())
     }
 
     pub fn set_mouse_performance_settings(
@@ -238,6 +300,22 @@ impl MouseManager {
                 .execute(&self.device)?;
 
             self.profile.borrow_mut().dpi_led = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn set_poll_rate(&self, rate: PollingRate) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .poll_rate(rate)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
 
             Ok(())
         })
@@ -307,16 +385,34 @@ impl MouseManager {
         })
     }
 
-    pub fn set_dpi_profile_color(
+    pub fn set_active_gear(&self, gear: Gear) -> Result<(), Box<dyn std::error::Error>> {
+        self.wrapper(|_| {
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .active_profile(gear as _)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
+
+            Ok(())
+        })
+    }
+
+    pub fn update_gear_color(
         &self,
-        preset: Preset,
+        gear: Gear,
         color: Color,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = Pair::from(preset);
-            let slot = Slot::from(preset);
+            let pair = Pair::from(gear);
+            let slot = Slot::from(gear);
 
-            let response = self.profile().dpi_color[pair as usize]
+            let response = self
+                .profile()
+                .color_pair_setting(pair)
                 .builder()
                 .color(color, slot)
                 .build()
@@ -328,14 +424,10 @@ impl MouseManager {
         })
     }
 
-    pub fn set_dpi_profile_dpi(
-        &self,
-        preset: Preset,
-        dpi: Dpi,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update_gear_dpi(&self, gear: Gear, dpi: Dpi) -> Result<(), Box<dyn std::error::Error>> {
         self.wrapper(|_| {
-            let pair = Pair::from(preset);
-            let slot = Slot::from(preset);
+            let pair = Pair::from(gear);
+            let slot = Slot::from(gear);
 
             let response = self
                 .profile()
@@ -351,17 +443,13 @@ impl MouseManager {
         })
     }
 
-    pub fn new_dpi_profile(
-        &self,
-        dpi: Dpi,
-        color: Color,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.wrapper(|_| {
-            let num_profile = self.profile().mouse_info().num_profile();
-            if num_profile >= 8 {
-                return Err("Maximum number of profiles reached".into());
-            }
+    pub fn new_gear(&self, dpi: Dpi, color: Color) -> Result<(), Box<dyn std::error::Error>> {
+        let num_profile = self.profile().mouse_info().num_profile();
+        if num_profile >= 8 {
+            return Err("Maximum number of profiles reached".into());
+        }
 
+        self.wrapper(|_| {
             let response = self
                 .profile()
                 .mouse_info()
@@ -370,12 +458,53 @@ impl MouseManager {
                 .build()
                 .execute(&self.device)?;
 
+            let gear = Gear::try_from(num_profile + 1)?;
+
+            self.update_gear_dpi(gear, dpi)?;
+            self.update_gear_color(gear, color)?;
+
             self.profile.borrow_mut().mouse_info = response.config();
 
-            let profile = Preset::try_from(num_profile + 1)?;
+            Ok(())
+        })
+    }
 
-            self.set_dpi_profile_dpi(profile, dpi)?;
-            self.set_dpi_profile_color(profile, color)?;
+    pub fn delete_gear(&self, gear: Gear) -> Result<(), Box<dyn std::error::Error>> {
+        let num_profile = self.profile().mouse_info().num_profile();
+        let active_profile = self.profile().mouse_info().active_profile();
+        if num_profile == active_profile {
+            return Err("Cannot delete the active profile".into());
+        }
+
+        if gear as u8 > num_profile {
+            return Err(format!(
+                "Profile {} has not been created yet. Last profile is {}",
+                gear as u8, num_profile
+            )
+            .into());
+        }
+
+        self.wrapper(|_| {
+            if num_profile != gear as u8 {
+                for i in (gear as u8 + 1)..=num_profile {
+                    let src_gear = Gear::try_from(i)?;
+                    let gear = self.profile().gear(src_gear);
+
+                    let dst_gear = Gear::try_from(i - 1)?;
+                    self.update_gear_dpi(dst_gear, gear.dpi())?;
+                    self.update_gear_color(dst_gear, gear.color())?;
+                }
+            }
+
+            let response = self
+                .profile()
+                .mouse_info()
+                .builder()
+                .num_profile(num_profile - 1)
+                .build()
+                .execute(&self.device)?;
+
+            self.profile.borrow_mut().mouse_info = response.config();
 
             Ok(())
         })

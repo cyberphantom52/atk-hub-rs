@@ -1,161 +1,56 @@
 use libatk_rs::prelude::*;
 
-static DPI_STEP: u16 = 50;
+use crate::{
+    proto,
+    types::{Color, Dpi},
+};
 
 #[derive(Debug, Clone, Copy)]
-pub struct Dpi(u16);
+pub enum Gear {
+    One = 1,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+}
 
-impl std::fmt::Display for Dpi {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.dpi())
+impl Into<proto::Gear> for Gear {
+    fn into(self) -> proto::Gear {
+        match self {
+            Gear::One => proto::Gear::One,
+            Gear::Two => proto::Gear::Two,
+            Gear::Three => proto::Gear::Three,
+            Gear::Four => proto::Gear::Four,
+            Gear::Five => proto::Gear::Five,
+            Gear::Six => proto::Gear::Six,
+            Gear::Seven => proto::Gear::Seven,
+            Gear::Eight => proto::Gear::Eight,
+        }
     }
 }
 
-impl Default for Dpi {
-    fn default() -> Self {
-        Dpi(1600)
-    }
-}
-
-impl From<u16> for Dpi {
-    fn from(value: u16) -> Self {
-        Dpi(value)
-    }
-}
-
-impl TryFrom<&[u8]> for Dpi {
+impl TryFrom<proto::Gear> for Gear {
     type Error = Error;
 
-    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        if data.len() != 4 {
-            return Err(Error::ParseError(format!(
-                "DPI: Invalid data length: expected 4 got {}",
-                data.len()
-            )));
-        }
-
-        let checksum = 0xff
-            & 0x55u8
-                .wrapping_sub(data[0])
-                .wrapping_sub(data[1])
-                .wrapping_sub(data[2]);
-        if checksum != data[3] {
-            return Err(Error::ParseError("DPI: Invalid checksum".to_string()));
-        }
-
-        let x_dpi = data[0];
-        let dpi_ex = data[2];
-
-        Ok(Self(
-            (((u8::MAX as u16 + 1) * dpi_ex as u16 / 0x44) + (x_dpi as u16 + 1)) * DPI_STEP,
-        ))
-    }
-}
-
-impl Into<[u8; 4]> for Dpi {
-    fn into(self) -> [u8; 4] {
-        let steps = (self.dpi() / DPI_STEP) - 1;
-
-        let x_dpi = u8::MAX & steps as u8;
-        let y_dpi = x_dpi;
-        let dpi_ex = (0x44 * steps / (u8::MAX as u16 + 1)) as u8;
-        let checksum = u8::MAX
-            & 0x55u8
-                .wrapping_sub(x_dpi)
-                .wrapping_sub(y_dpi)
-                .wrapping_sub(dpi_ex);
-
-        [x_dpi, y_dpi, dpi_ex, checksum]
-    }
-}
-
-impl Dpi {
-    pub fn new(dpi: u16) -> Self {
-        Dpi(dpi)
-    }
-
-    pub fn dpi(&self) -> u16 {
-        self.0
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Color {
-    red: u8,
-    green: u8,
-    blue: u8,
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Color {
-            red: 0xFF,
-            green: 0xFF,
-            blue: 0xFF,
+    fn try_from(value: proto::Gear) -> Result<Self, Self::Error> {
+        match value {
+            proto::Gear::One => Ok(Gear::One),
+            proto::Gear::Two => Ok(Gear::Two),
+            proto::Gear::Three => Ok(Gear::Three),
+            proto::Gear::Four => Ok(Gear::Four),
+            proto::Gear::Five => Ok(Gear::Five),
+            proto::Gear::Six => Ok(Gear::Six),
+            proto::Gear::Seven => Ok(Gear::Seven),
+            proto::Gear::Eight => Ok(Gear::Eight),
+            _ => Err(Error::ParseError(format!(
+                "Preset: Invalid DPI profile: {}",
+                value as u8
+            ))),
         }
     }
-}
-
-impl std::fmt::Display for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "#{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
-    }
-}
-
-impl TryFrom<&[u8]> for Color {
-    type Error = Error;
-
-    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        if data.len() != 4 {
-            return Err(Error::ParseError("Color: Invalid data length".to_string()));
-        }
-
-        let checksum = 0xff
-            & 0x55u8
-                .wrapping_sub(data[0])
-                .wrapping_sub(data[1])
-                .wrapping_sub(data[2]);
-
-        if checksum != data[3] {
-            return Err(Error::ParseError("Color: Invalid checksum".to_string()));
-        }
-
-        Ok(Self {
-            red: data[0],
-            green: data[1],
-            blue: data[2],
-        })
-    }
-}
-
-impl Into<[u8; 4]> for Color {
-    fn into(self) -> [u8; 4] {
-        let checksum = 0xff
-            & 0x55u8
-                .wrapping_sub(self.red)
-                .wrapping_sub(self.green)
-                .wrapping_sub(self.blue);
-
-        [self.red, self.green, self.blue, checksum]
-    }
-}
-
-impl Color {
-    pub fn new(red: u8, green: u8, blue: u8) -> Self {
-        Color { red, green, blue }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Preset {
-    Preset1,
-    Preset2,
-    Preset3,
-    Preset4,
-    Preset5,
-    Preset6,
-    Preset7,
-    Preset8,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -167,13 +62,13 @@ pub enum Pair {
     Pair4,
 }
 
-impl From<Preset> for Pair {
-    fn from(value: Preset) -> Self {
+impl From<Gear> for Pair {
+    fn from(value: Gear) -> Self {
         match value {
-            Preset::Preset1 | Preset::Preset2 => Pair::Pair1,
-            Preset::Preset3 | Preset::Preset4 => Pair::Pair2,
-            Preset::Preset5 | Preset::Preset6 => Pair::Pair3,
-            Preset::Preset7 | Preset::Preset8 => Pair::Pair4,
+            Gear::One | Gear::Two => Pair::Pair1,
+            Gear::Three | Gear::Four => Pair::Pair2,
+            Gear::Five | Gear::Six => Pair::Pair3,
+            Gear::Seven | Gear::Eight => Pair::Pair4,
         }
     }
 }
@@ -184,30 +79,30 @@ pub enum Slot {
     Second = 0x4,
 }
 
-impl From<Preset> for Slot {
-    fn from(value: Preset) -> Self {
+impl From<Gear> for Slot {
+    fn from(value: Gear) -> Self {
         match value {
-            Preset::Preset1 | Preset::Preset3 => Slot::First,
-            Preset::Preset2 | Preset::Preset4 => Slot::Second,
-            Preset::Preset5 | Preset::Preset7 => Slot::First,
-            Preset::Preset6 | Preset::Preset8 => Slot::Second,
+            Gear::One | Gear::Three => Slot::First,
+            Gear::Two | Gear::Four => Slot::Second,
+            Gear::Five | Gear::Seven => Slot::First,
+            Gear::Six | Gear::Eight => Slot::Second,
         }
     }
 }
 
-impl TryFrom<u8> for Preset {
+impl TryFrom<u8> for Gear {
     type Error = Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Preset::Preset1),
-            1 => Ok(Preset::Preset2),
-            2 => Ok(Preset::Preset3),
-            3 => Ok(Preset::Preset4),
-            4 => Ok(Preset::Preset5),
-            5 => Ok(Preset::Preset6),
-            6 => Ok(Preset::Preset7),
-            7 => Ok(Preset::Preset8),
+            1 => Ok(Gear::One),
+            2 => Ok(Gear::Two),
+            3 => Ok(Gear::Three),
+            4 => Ok(Gear::Four),
+            5 => Ok(Gear::Five),
+            6 => Ok(Gear::Six),
+            7 => Ok(Gear::Seven),
+            8 => Ok(Gear::Eight),
             _ => Err(Error::ParseError(format!(
                 "Preset: Invalid DPI profile: {}",
                 value
@@ -251,18 +146,26 @@ impl TryFrom<EEPROMAddress> for Pair {
 }
 
 #[derive(Debug, Clone)]
-pub struct Gear {
+pub struct Profile {
     dpi: Dpi,
     color: Color,
 }
 
-impl Gear {
+impl Profile {
     pub fn new(dpi: Dpi, color: Color) -> Self {
-        Gear { dpi, color }
+        Profile { dpi, color }
+    }
+
+    pub fn dpi(&self) -> Dpi {
+        self.dpi
+    }
+
+    pub fn color(&self) -> Color {
+        self.color
     }
 }
 
-impl std::fmt::Display for Gear {
+impl std::fmt::Display for Profile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "DPI: {} | Color: {}", self.dpi, self.color)
     }

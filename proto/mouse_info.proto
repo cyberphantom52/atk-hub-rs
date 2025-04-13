@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package atk_hub;
+
+enum PollingRate {
+  PollingRateInvalid = 0x0;
+  PollingRateHz1000 = 0x1;
+  PollingRateHz500 = 0x2;
+  PollingRateHz250 = 0x4;
+  PollingRateHz125 = 0x8;
+  PollingRateHz2000 = 0x10;
+  PollingRateHz4000 = 0x20;
+  PollingRateHz8000 = 0x40;
+}
+
+message MouseVersionResponse {
+  int32 major = 1;
+  int32 minor = 2;
+}
+
+enum ConnectionType {
+  ConnectionTypeDongle1K = 0;
+  ConnectionTypeDongle4K = 1;
+  ConnectionTypeWired1K = 2;
+  ConnectionTypeWired8K = 3;
+  ConnectionTypeDongle2K = 4;
+  ConnectionTypeDongle8K = 5;
+}
+
+message ConnectionTypeResponse {
+  ConnectionType type = 1;
+}
+
+message PollRateRequest {
+  PollingRate rate = 1;
+}
+
+message PollRateResponse {
+  PollingRate rate = 1;
+}

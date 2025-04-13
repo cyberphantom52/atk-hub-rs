@@ -1,56 +1,37 @@
+use crate::proto::{LedBreathingRate, LedBrightnessLevel, LedEffectMode};
 use libatk_rs::prelude::*;
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-pub enum LedEffectMode {
-    Static = 0x1,
-    Breathing = 0x2,
-}
-
-impl From<u8> for LedEffectMode {
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for LedEffectMode {
+    type Error = Self;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x1 => LedEffectMode::Static,
-            0x2 => LedEffectMode::Breathing,
-            _ => panic!("Invalid RGB lighting effect"),
+            0x1 => Ok(LedEffectMode::Static),
+            0x2 => Ok(LedEffectMode::Breathing),
+            _ => Err(LedEffectMode::Invalid),
         }
     }
 }
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-pub enum LedBreathingRate {
-    Slow = 0x1,
-    Medium = 0x3,
-    Fast = 0x5,
-}
-
-impl From<u8> for LedBreathingRate {
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for LedBreathingRate {
+    type Error = Self;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x1 => LedBreathingRate::Slow,
-            0x3 => LedBreathingRate::Medium,
-            0x5 => LedBreathingRate::Fast,
-            _ => panic!("Invalid breathing speed"),
+            0x1 => Ok(LedBreathingRate::Slow),
+            0x3 => Ok(LedBreathingRate::Medium),
+            0x5 => Ok(LedBreathingRate::Fast),
+            _ => Err(LedBreathingRate::Invalid),
         }
     }
 }
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-pub enum LedBrightnessLevel {
-    Low = 0x10,
-    Medium = 0x80,
-    High = 0xff,
-}
-
-impl From<u8> for LedBrightnessLevel {
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for LedBrightnessLevel {
+    type Error = Self;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x10 => LedBrightnessLevel::Low,
-            0x80 => LedBrightnessLevel::Medium,
-            0xff => LedBrightnessLevel::High,
-            _ => panic!("Invalid long bright brightness"),
+            0x10 => Ok(LedBrightnessLevel::Low),
+            0x80 => Ok(LedBrightnessLevel::Medium),
+            0xff => Ok(LedBrightnessLevel::High),
+            _ => Err(LedBrightnessLevel::Invalid),
         }
     }
 }
@@ -61,6 +42,17 @@ pub struct DpiLedSettings {
     brightness: LedBrightnessLevel,
     breathing_rate: LedBreathingRate,
     enabled: bool,
+}
+
+impl Into<crate::proto::LedEffectResponse> for DpiLedSettings {
+    fn into(self) -> crate::proto::LedEffectResponse {
+        crate::proto::LedEffectResponse {
+            enabled: self.enabled,
+            mode: self.mode.into(),
+            brightness: self.brightness.into(),
+            rate: self.breathing_rate.into(),
+        }
+    }
 }
 
 impl std::fmt::Display for DpiLedSettings {
@@ -150,9 +142,9 @@ impl Command<DpiLedSettings> {
 
     pub fn config(self) -> DpiLedSettings {
         DpiLedSettings {
-            mode: self.data()[0x0].into(),
-            brightness: self.data()[0x2].into(),
-            breathing_rate: self.data()[0x4].into(),
+            mode: self.data()[0x0].try_into().unwrap(),
+            brightness: self.data()[0x2].try_into().unwrap(),
+            breathing_rate: self.data()[0x4].try_into().unwrap(),
             enabled: self.data()[0x6] == 0x1,
         }
     }
