@@ -85,23 +85,52 @@ impl<T: TimeUnit> Duration<T> {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Dpi(u16);
+pub struct Dpi {
+    x: u8,
+    y: u8,
+    dpi_ex: u8,
+}
 
 impl std::fmt::Display for Dpi {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.dpi())
+        write!(f, "X: {}, Y: {}", self.x_dpi(), self.y_dpi())
     }
 }
 
 impl Default for Dpi {
     fn default() -> Self {
-        Dpi(1600)
+        Self::new(1600, 1600)
     }
 }
 
-impl From<u16> for Dpi {
-    fn from(value: u16) -> Self {
-        Dpi(value)
+impl Dpi {
+    fn new(x: u16, y: u16) -> Dpi {
+        let x_steps = (x / DPI_STEP) - 1;
+        let y_steps = (y / DPI_STEP) - 1;
+
+        let x: u8 = u8::MAX & x_steps as u8;
+        let y: u8 = u8::MAX & y_steps as u8;
+
+        let x_high: u8 = ((x_steps >> 8) & 0x0F) as u8;
+        let y_high: u8 = ((y_steps >> 8) & 0x0F) as u8;
+
+        let dpi_ex = (x_high << 6) | (y_high << 2);
+
+        Self { x, y, dpi_ex }
+    }
+
+    fn x_dpi(&self) -> u16 {
+        let x_high: u16 = (self.dpi_ex >> 6) as u16;
+        let x_steps: u16 = (x_high << 8) | (self.x as u16);
+
+        (x_steps + 1) * DPI_STEP
+    }
+
+    fn y_dpi(&self) -> u16 {
+        let y_high: u16 = ((self.dpi_ex >> 2) & 0x0F) as u16;
+        let y_steps: u16 = (y_high << 8) | (self.y as u16);
+
+        (y_steps + 1) * DPI_STEP
     }
 }
 
@@ -110,65 +139,50 @@ impl TryFrom<&[u8]> for Dpi {
 
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         if data.len() != 4 {
-            return Err(Error::ParseError(format!(
-                "DPI: Invalid data length: expected 4 got {}",
-                data.len()
-            )));
+            return Err(Error::ParseError("DPI2: Invalid data length".to_string()));
         }
 
-        let checksum = 0xff
+        let checksum = u8::MAX
             & 0x55u8
                 .wrapping_sub(data[0])
                 .wrapping_sub(data[1])
                 .wrapping_sub(data[2]);
         if checksum != data[3] {
-            return Err(Error::ParseError("DPI: Invalid checksum".to_string()));
+            return Err(Error::ParseError("DPI2: Invalid checksum".to_string()));
         }
 
-        let x_dpi = data[0];
-        let dpi_ex = data[2];
-
-        Ok(Self(
-            (((u8::MAX as u16 + 1) * dpi_ex as u16 / 0x44) + (x_dpi as u16 + 1)) * DPI_STEP,
-        ))
+        Ok(Self {
+            x: data[0],
+            y: data[1],
+            dpi_ex: data[2],
+        })
     }
 }
 
 impl Into<[u8; 4]> for Dpi {
     fn into(self) -> [u8; 4] {
-        let steps = (self.dpi() / DPI_STEP) - 1;
-
-        let x_dpi = u8::MAX & steps as u8;
-        let y_dpi = x_dpi;
-        let dpi_ex = (0x44 * steps / (u8::MAX as u16 + 1)) as u8;
         let checksum = u8::MAX
             & 0x55u8
-                .wrapping_sub(x_dpi)
-                .wrapping_sub(y_dpi)
-                .wrapping_sub(dpi_ex);
+                .wrapping_sub(self.x)
+                .wrapping_sub(self.y)
+                .wrapping_sub(self.dpi_ex);
 
-        [x_dpi, y_dpi, dpi_ex, checksum]
+        [self.x, self.y, self.dpi_ex, checksum]
+    }
+}
+
+impl From<proto::Dpi> for Dpi {
+    fn from(proto: proto::Dpi) -> Self {
+        Self::new(proto.x as u16, proto.y as u16)
     }
 }
 
 impl Into<proto::Dpi> for Dpi {
     fn into(self) -> proto::Dpi {
         proto::Dpi {
-            x: self.0 as i32,
-            y: self.0 as i32,
+            x: self.x_dpi() as i32,
+            y: self.y_dpi() as i32,
         }
-    }
-}
-
-impl From<proto::Dpi> for Dpi {
-    fn from(proto: proto::Dpi) -> Self {
-        Dpi(proto.x as u16)
-    }
-}
-
-impl Dpi {
-    pub fn dpi(&self) -> u16 {
-        self.0
     }
 }
 
